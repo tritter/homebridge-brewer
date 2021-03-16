@@ -3,7 +3,6 @@ import { on, Peripheral, startScanningAsync, stopScanning } from 'noble';
 import { PLATFORM_NAME, PLUGIN_NAME } from './settings';
 import { ExpertPlatformAccessory } from './platformAccessory';
 import MachineUDID from './models/machineUDIDs';
-import { CoffeeType, CoffeeTypeUtils, TemperatureType } from './models/cofeeTypes';
 
 export class NespressoPlatform implements DynamicPlatformPlugin {
 

@@ -1,9 +1,7 @@
-import { Service, PlatformAccessory, CharacteristicValue } from 'homebridge';
+import { PlatformAccessory, CharacteristicValue } from 'homebridge';
 import { CoffeeType, CoffeeTypeUtils } from './models/cofeeTypes';
-
 import { NespressoPlatform } from './platform';
 import { IMachineController, MachineController } from './controllers/machineController';
-import { BrewStatus } from './models/machineStatus';
 
 export class ExpertPlatformAccessory {
   private readonly _controller: IMachineController;
