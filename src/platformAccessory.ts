@@ -1,5 +1,5 @@
 import { PlatformAccessory, CharacteristicValue } from 'homebridge';
-import { CoffeeType, CoffeeTypeUtils, TemperatureType, TemperatureUtils } from './models/cofeeTypes';
+import { CoffeeType, CoffeeTypeUtils, TemperatureUtils } from './models/cofeeTypes';
 import { NespressoPlatform } from './platform';
 import { IMachineController, MachineController } from './controllers/machineController';
 import { IDeviceConfig } from './models/deviceConfig';

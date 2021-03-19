@@ -2,6 +2,9 @@
 <!-- [![verified-by-homebridge](https://badgen.net/badge/homebridge/verified/purple)](https://github.com/homebridge/homebridge/wiki/Verified-Plugins) -->
 [![npm](https://img.shields.io/npm/v/homebridge-brewer.svg)](https://www.npmjs.com/package/homebridge-brewer) [![npm](https://img.shields.io/npm/dt/homebridge-brewer.svg)](https://www.npmjs.com/package/homebridge-brewer)
 
+<img src="https://github.com/tritter/homebridge-brewer/blob/master/.img/homekit.jpeg?raw=true" >
+
+
 [Homebridge](https://github.com/nfarina/homebridge) plugin for brewing coffee with your Nespresso machines using [HomeKit](https://www.apple.com/ios/home/) accessories.
 
 ## Homebridge configuration
@@ -28,11 +31,17 @@ Update your Homebridge `config.json` file. See [config-sample.json](config-sampl
 | `Brewer`|"Brewer"| Mandatory. The name provided to Homebridge. Must be "Brewer".|
 | `machines`|[]|Array of configured machines, is needed if you want to display one. (Multiple are supported)|
 | `displayName`|"Coffee"| The name of this accessory. This will appear in your Home-app. 
-| `name`|| Mandatory. The bluetooth name of the machine, can be found on your phone or pc, or any bluetooth discovery app.
-| `token`||Authentication token which is required to send any commands see chapter below ho to gather one. Make sure the format is exactly "XX-XX-XX-XX-XX-XX-XX-XX"|
+| `name`|| Mandatory. The bluetooth name of the machine, can be found on your phone or pc, or any bluetooth discovery app. (see below)
+| `token`||Authentication token which is required to send any commands see below ho to gather one. Make sure the format is exactly "XX-XX-XX-XX-XX-XX-XX-XX"|
 | `temperature`|"Medium"| Mandatory. The temperature which is used to brew your coffees. Can be set to "Low", "Medium" and "High".
 
-## Authentication token
+## Name
+You can find the name quite easily add the platform and check the homebridge log. If your homebridge server has bluetooth enabled and is close enough to the machine you will see something like this:
+```[3/19/2021, 9:19:27 PM] [Brewer] Found new device, please add configuration for: "Expert_AHD34DDBADCC"```
+The value "Expert_AHD34DDBADCC" should be used for the name in the configuration.
+
+
+## Token
 -----------------
 In order to retrieve the [token](https://gist.github.com/farminf/94f681eaca2760212f457ac59da99f23) (you need to snoop the bluetooth packets:
 
@@ -70,6 +79,5 @@ These users/repositories helped making the Homekit integration possible:
 
 [@petergullberg](https://github.com/petergullberg) - https://github.com/petergullberg/brewbutton
 
-
 And me and yes, I like coffe ;)
-<img src="https://img.buymeacoffee.com/api/?url=aHR0cHM6Ly9pbWcuYnV5bWVhY29mZmVlLmNvbS9hcGkvP25hbWU9dHJpdHRlciZzaXplPTMwMCZiZy1pbWFnZT1ibWMmYmFja2dyb3VuZD01RjdGRkY=&creator=tritter&is_creating=Developer&design_code=1&design_color=%235F7FFF&slug=tritter" >
+[<img src="https://github.com/tritter/homebridge-brewer/blob/master/.img/coffee-button.png?raw=true" >](https://www.buymeacoffee.com/tritter)
