@@ -1,16 +1,15 @@
 {
-  "private": true,
-  "displayName": "Homebridge Brewer",
+  "displayName": "Brewer",
   "name": "homebridge-brewer",
   "version": "1.0.0",
-  "description": "A short description about what your plugin does.",
+  "description": "Brew your coffee via homebridge! Plugin for Nespresso machines using Bluetooth like the Nespresso Expert line",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "git://github.com/USERNAME/GITHUB_PROJECT_NAME.git"
+    "url": "git://github.com/tritter/homebridge-brewer.git"
   },
   "bugs": {
-    "url": "https://github.com/USERNAME/GITHUB_PROJECT_NAME/issues"
+    "url": "https://github.com/tritter/homebridge-brewer/issues"
   },
   "engines": {
     "node": ">=10.17.0",

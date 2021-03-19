@@ -3,13 +3,13 @@ import { on, Peripheral, startScanningAsync, stopScanning } from 'noble';
 import { PLATFORM_NAME, PLUGIN_NAME } from './settings';
 import { ExpertPlatformAccessory } from './platformAccessory';
 import MachineUDID from './models/machineUDIDs';
+import { IDeviceConfig } from './models/deviceConfig';
 
 export class NespressoPlatform implements DynamicPlatformPlugin {
 
   public readonly Service: typeof Service = this.api.hap.Service;
   public readonly Characteristic: typeof Characteristic = this.api.hap.Characteristic;
 
-  // this is used to track restored cached accessories
   public readonly accessories: PlatformAccessory[] = [];
 
   constructor(
@@ -20,8 +20,7 @@ export class NespressoPlatform implements DynamicPlatformPlugin {
     this.log.debug('Finished initializing platform:', this.config.name);
 
     this.api.on('didFinishLaunching', () => {
-      log.debug('Executed didFinishLaunching callback');
-      // run the method to discover / register your devices as accessories
+      log.debug('Start discovery');
       this.discoverDevices();
     });
 
@@ -37,9 +36,9 @@ export class NespressoPlatform implements DynamicPlatformPlugin {
   }
 
   discoverDevices() {
-    const configuredDevices: [DeviceConfig] = this.config['devices'];
+    const configuredDevices: IDeviceConfig[] = this.config['machines'] ?? new Array<IDeviceConfig>();
     const devicesMap = configuredDevices.reduce((a, x) => ({...a, [x.name]: x.token}), {});
-    this.log.debug(`"Configured devices: ${configuredDevices.length}"`);
+    this.log.debug(`"Configured machines: ${configuredDevices.length}"`);
     this.log.debug('Start discovery');
     startScanningAsync([MachineUDID.services.auth, MachineUDID.services.command], false);
     on('discover', (peripheral: Peripheral) => {

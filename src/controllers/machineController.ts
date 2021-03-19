@@ -4,16 +4,17 @@ import { on, Peripheral, startScanningAsync, stopScanningAsync, Characteristic }
 import MachineUDID from '../models/machineUDIDs';
 import { BrewStatus, MachineStatus } from '../models/machineStatus';
 import { ResponseStatus } from '../models/responseStatus';
+import { IDeviceConfig } from '../models/deviceConfig';
 
 
 export interface IMachineController {
-  brew(type: CoffeeType): Promise<ResponseStatus | undefined>;
+  brew(type: CoffeeType, temperature: TemperatureType): Promise<ResponseStatus | undefined>;
   isBrewing(type: CoffeeType): Promise<boolean>;
   cancel(): Promise<ResponseStatus | undefined>;
 }
 
 export class MachineController implements IMachineController {
-  private readonly _config: DeviceConfig;
+  private readonly _config: IDeviceConfig;
   private _periphial: Peripheral | undefined;
   private _lastBrew: CoffeeType | undefined;
 
@@ -23,17 +24,18 @@ export class MachineController implements IMachineController {
     this._config = accessory.context.device;
   }
 
-  async brew(type: CoffeeType): Promise<ResponseStatus | undefined> {
+  async brew(type: CoffeeType, temperature: TemperatureType): Promise<ResponseStatus | undefined> {
     const characteristics = await this.connect();
     const machineStatus = await this.readStatus(characteristics);
     this.log.debug(machineStatus.toString());
     if (machineStatus.status === BrewStatus.Ready) {
       this.log.debug('Machine seems to be ready');
-      const response = await this.sendBrewCommand(characteristics, type);
+      const response = await this.sendBrewCommand(characteristics, type, temperature);
       this.log.debug('Received response!');
       this._lastBrew = response.success ? type : undefined;
       return response;
     }
+    this._lastBrew = undefined;
     return undefined;
   }
 
@@ -56,7 +58,10 @@ export class MachineController implements IMachineController {
     this._periphial = await this.find();
     this._periphial.on('disconnect', (error: string) => {
       this._lastBrew = undefined;
-      this.log.info(`Machine disconnected ${error}`);
+      if (error) {
+        this.log.error(error);
+      }
+      this.log.info('Machine disconnected');
     });
     const characteristics = await this.findCharacteristics(this._periphial);
     await this.authenticate(characteristics);
@@ -70,7 +75,7 @@ export class MachineController implements IMachineController {
     this._periphial = undefined;
   }
 
-  find() : Promise<Peripheral> {
+  find(): Promise<Peripheral> {
     return new Promise((resolve, rejects) => {
       this.log.info('Start scan');
       startScanningAsync([MachineUDID.services.auth, MachineUDID.services.command], false);
@@ -113,7 +118,7 @@ export class MachineController implements IMachineController {
   }
 
   private generateKey(): Buffer{
-    const token = this._config.token || '';
+    const token = this._config.token?.replace(/-/g, '') ?? '';
     this.log.debug(`Token: ${token}`);
     return this.generateBuffer(token);
   }
@@ -192,8 +197,10 @@ export class MachineController implements IMachineController {
     });
   }
 
-  private sendBrewCommand(characteristics: Characteristic[], coffeeType: CoffeeType) : Promise<ResponseStatus> {
-    const command = CoffeeTypeUtils.command(coffeeType, TemperatureType.High);
+  private sendBrewCommand(characteristics: Characteristic[],
+    coffeeType: CoffeeType,
+    temperature: TemperatureType) : Promise<ResponseStatus> {
+    const command = CoffeeTypeUtils.command(coffeeType, temperature);
     return this.sendCommand(characteristics, this.generateBuffer(command));
   }
 
@@ -226,9 +233,3 @@ export class MachineController implements IMachineController {
     });
   }
 }
-
-// sendBrew
-// receiveResponse
-// Return isOn
-// Wait for status standby > disconnect.
-// Put all switches off again.

@@ -1,3 +1,4 @@
+import { PlatformAccessory } from 'homebridge';
 
 export enum CoffeeType {
     Ristretto = 0,
@@ -13,28 +14,51 @@ export enum TemperatureType {
     High = 2
 }
 
+export class TemperatureUtils {
+  public static ofString(value: string) : TemperatureType {
+    switch(value) {
+      case 'Low':
+        return TemperatureType.Low;
+      case 'Medium':
+        return TemperatureType.Medium;
+      case 'High':
+        return TemperatureType.High;
+      default:
+        return TemperatureType.Medium;
+    }
+  }
+}
+
 export class CoffeeTypeUtils {
   public static command(type: CoffeeType, temperature: TemperatureType) {
-    const zeroPad = (num) => String(num).padStart(2, '0');
+    const zeroPad = (num: number) => String(num).padStart(2, '0');
     const commandValue = '0305070400000000';
     const temperatureValue = zeroPad(temperature);
     const coffeValue = zeroPad(type);
     return commandValue + temperatureValue + coffeValue;
   }
 
-  public static toUDID(type: CoffeeType) {
+  public static toUDID(accessory: PlatformAccessory, type: CoffeeType) {
+    const uuid = accessory.UUID;
+    let suffix: string;
     switch(type) {
       case CoffeeType.Ristretto:
-        return 'Ristretto';
+        suffix = 'ris';
+        break;
       case CoffeeType.Espresso:
-        return 'Espresso';
+        suffix = 'esp';
+        break;
       case CoffeeType.Lungo:
-        return 'Lungo';
+        suffix = 'lun';
+        break;
       case CoffeeType.Americano:
-        return 'Americano';
+        suffix = 'ame';
+        break;
       case CoffeeType.Water:
-        return 'Water';
+        suffix = 'wat';
+        break;
     }
+    return uuid.slice(0, suffix.length) + suffix;
   }
 
   public static humanReadable(type: CoffeeType) {

@@ -1,20 +1,33 @@
 import { PlatformAccessory, CharacteristicValue } from 'homebridge';
-import { CoffeeType, CoffeeTypeUtils } from './models/cofeeTypes';
+import { CoffeeType, CoffeeTypeUtils, TemperatureType, TemperatureUtils } from './models/cofeeTypes';
 import { NespressoPlatform } from './platform';
 import { IMachineController, MachineController } from './controllers/machineController';
+import { IDeviceConfig } from './models/deviceConfig';
 
 export class ExpertPlatformAccessory {
   private readonly _controller: IMachineController;
+  private readonly _config: IDeviceConfig;
 
   constructor(
     private readonly platform: NespressoPlatform,
     private readonly accessory: PlatformAccessory,
   ) {
+    this._config = accessory.context.device;
+    const splittedArticle = this._config.name.split('_');
+    if (splittedArticle.length < 2) {
+      this.platform.log.error(`The given name ${this._config.name},
+       is not a valid device name, please enter the correct name. For example "Expert_DB1234DB12345`);
+      throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.RESOURCE_DOES_NOT_EXIST);
+    }
+    const model = splittedArticle[0];
+    const serial = splittedArticle[1];
+    const displayName = this._config.displayName ?? 'Coffee';
     this._controller = new MachineController(platform.log, accessory);
     this.accessory.getService(this.platform.Service.AccessoryInformation)!
       .setCharacteristic(this.platform.Characteristic.Manufacturer, 'Nespresso')
-      .setCharacteristic(this.platform.Characteristic.Model, 'Default-Model')
-      .setCharacteristic(this.platform.Characteristic.SerialNumber, 'Default-Serial');
+      .setCharacteristic(this.platform.Characteristic.Model, model)
+      .setCharacteristic(this.platform.Characteristic.SerialNumber, serial)
+      .setCharacteristic(this.platform.Characteristic.Name, displayName);
     this.initCoffeType(CoffeeType.Ristretto);
     this.initCoffeType(CoffeeType.Espresso);
     this.initCoffeType(CoffeeType.Lungo);
@@ -23,34 +36,36 @@ export class ExpertPlatformAccessory {
   }
 
   initCoffeType(type: CoffeeType) {
-    const accessory = this.accessory.getService(CoffeeTypeUtils.toUDID(type))
-    || this.accessory.addService(this.platform.Service.Switch, CoffeeTypeUtils.humanReadable(type), CoffeeTypeUtils.toUDID(type));
+    const uuid = CoffeeTypeUtils.toUDID(this.accessory, type);
+    const accessory = this.accessory.getService(uuid)
+    || this.accessory.addService(this.platform.Service.Switch, CoffeeTypeUtils.humanReadable(type), uuid);
     accessory.getCharacteristic(this.platform.Characteristic.On)
       .onSet((value) => this.setOn(value, type))
       .onGet(() => this.getOn(type));
   }
 
-
-  async setOn(value: CharacteristicValue, type: CoffeeType) {
-    this.platform.log.debug('Set Characteristic On ->', value);
-    const response = value ? await this._controller.brew(type) : await this._controller.cancel();
+  async controlMachine(value: CharacteristicValue, type: CoffeeType) {
+    const temperature = TemperatureUtils.ofString(this._config.temperature);
+    this.platform.log.info(`Temperature is ${temperature}`);
+    const response = value ? await this._controller.brew(type, temperature) : await this._controller.cancel();
     this.platform.log.info(`Received response ${response?.reason} ${response?.success}`);
     if (value && response && !response.success) {
       this.platform.log.error(response.reason);
-      const accessory = this.accessory.getService(CoffeeTypeUtils.toUDID(type));
+      const accessory = this.accessory.getService(CoffeeTypeUtils.toUDID(this.accessory, type));
       accessory?.setCharacteristic(this.platform.Characteristic.On, false);
       throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.NOT_ALLOWED_IN_CURRENT_STATE);
     }
   }
 
-  async getOn(type: CoffeeType): Promise<CharacteristicValue> {
+  setOn(value: CharacteristicValue, type: CoffeeType) {
+    this.platform.log.debug('Set Characteristic On ->', value);
+    // Start async command, not blocking homebridge!
+    this.controlMachine(value, type);
+  }
+
+  getOn(type: CoffeeType): Promise<CharacteristicValue> {
     const isOn = this._controller.isBrewing(type);
-
     this.platform.log.debug('Get Characteristic On ->', isOn);
-
-    // if you need to return an error to show the device as "Not Responding" in the Home app:
-    // throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
-
     return isOn;
   }
 }

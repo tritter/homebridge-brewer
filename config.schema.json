@@ -1,15 +1,46 @@
 {
-  "pluginAlias": "ExampleHomebridgePlugin",
+  "pluginAlias": "Brewer",
   "pluginType": "platform",
   "singular": true,
+  "headerDisplay": "Machines are exposed as separate accessories, each machine needs to be configured correctly.",
   "schema": {
-    "type": "object",
-    "properties": {
-      "name": {
-        "title": "Name",
-        "type": "string",
-        "required": true,
-        "default": "Example Dynamic Platform"
+    "machines": {
+      "type": "array",
+      "items": {
+        "title": "Nespresso machine",
+        "type": "object",
+        "properties": {
+          "displayName": {
+            "title": "Name of the accesory in the Home app",
+            "type": "string",
+            "placeholder": "Coffee"
+          },
+          "name": {
+            "title": "Name of the bluetooth device (see: )",
+            "type": "string",
+            "placeholder": "Expert_AHD34DDBADCC",
+            "required": true
+          },
+          "token": {
+            "title": "Authentication token of the bluetooth device (see: )",
+            "type": "string",
+            "pattern": "^([A-Fa-f0-9]{2}-){7}[A-Fa-f0-9]{2}$",
+            "placeholder": "DA-03-4B-BB-AA-CC-AA-CC",
+            "required": true
+          },
+          "temperature": {
+            "title": "Temperature",
+            "type": "string",
+            "description": "Can be set to either 'medium', 'low' or 'high' with respective obvious meanings.",
+            "default": "Medium",
+            "required": true,
+            "enum": [
+              "Medium",
+              "Low",
+              "High"
+            ]
+          }
+        }
       }
     }
   }
