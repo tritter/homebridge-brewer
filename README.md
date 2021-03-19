@@ -2,10 +2,30 @@
 <!-- [![verified-by-homebridge](https://badgen.net/badge/homebridge/verified/purple)](https://github.com/homebridge/homebridge/wiki/Verified-Plugins) -->
 [![npm](https://img.shields.io/npm/v/homebridge-brewer.svg)](https://www.npmjs.com/package/homebridge-brewer) [![npm](https://img.shields.io/npm/dt/homebridge-brewer.svg)](https://www.npmjs.com/package/homebridge-brewer)
 
-<img src="https://github.com/tritter/homebridge-brewer/blob/master/.img/homekit.jpeg?raw=true" height=250 >
+<img src="https://github.com/tritter/homebridge-brewer/blob/master/.img/sample.jpg?raw=true" height=250 >
+<img src="https://github.com/tritter/homebridge-brewer/blob/master/.img/homekit.jpg?raw=true" height=250 >
 
 
 [Homebridge](https://github.com/nfarina/homebridge) plugin for brewing coffee with your Nespresso machines using [HomeKit](https://www.apple.com/ios/home/) accessories.
+
+## Installation
+Make sure your system matches the prerequisites.
+
+[Noble](https://github.com/noble/noble) is BLE central module library for [Node.js](https://nodejs.org/) used to communicate with the coffee machines.
+
+ These libraries and their dependencies are required by the [Noble](https://www.npmjs.com/package/noble) library and provide access to the kernel Bluetooth subsystem:
+
+```sh
+sudo apt-get install bluetooth bluez libbluetooth-dev libudev-dev
+```
+
+For more information see the [Noble documentation](https://github.com/noble/noble#readme).
+
+### Install homebridge and this plugin
+```
+[sudo] npm install -g --unsafe-perm homebridge
+[sudo] npm install -g --unsafe-perm homebridge-brewer
+```
 
 ## Homebridge configuration
 Update your Homebridge `config.json` file. See [config-sample.json](config-sample.json) for a complete example.
