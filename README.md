@@ -2,7 +2,7 @@
 <!-- [![verified-by-homebridge](https://badgen.net/badge/homebridge/verified/purple)](https://github.com/homebridge/homebridge/wiki/Verified-Plugins) -->
 [![npm](https://img.shields.io/npm/v/homebridge-brewer.svg)](https://www.npmjs.com/package/homebridge-brewer) [![npm](https://img.shields.io/npm/dt/homebridge-brewer.svg)](https://www.npmjs.com/package/homebridge-brewer)
 
-<img src="https://github.com/tritter/homebridge-brewer/blob/master/.img/homekit.jpeg?raw=true" >
+<img src="https://github.com/tritter/homebridge-brewer/blob/master/.img/homekit.jpeg?raw=true" height=250 >
 
 
 [Homebridge](https://github.com/nfarina/homebridge) plugin for brewing coffee with your Nespresso machines using [HomeKit](https://www.apple.com/ios/home/) accessories.
@@ -80,4 +80,4 @@ These users/repositories helped making the Homekit integration possible:
 [@petergullberg](https://github.com/petergullberg) - https://github.com/petergullberg/brewbutton
 
 And me and yes, I like coffe ;)
-[<img src="https://github.com/tritter/homebridge-brewer/blob/master/.img/coffee-button.png?raw=true" >](https://www.buymeacoffee.com/tritter)
+[<img src="https://github.com/tritter/homebridge-brewer/blob/master/.img/coffee-button.png?raw=true" height=50 >](https://www.buymeacoffee.com/tritter)
