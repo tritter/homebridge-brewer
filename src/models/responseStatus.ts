@@ -7,6 +7,7 @@ export class ResponseStatus {
     this.reason = '';
 
     if ((sent[0] !== (response[0] & 0x3F)) || (sent[1] !== response[1])) {
+      this.reason = 'Received wrong response packet';
       return;
     }
 

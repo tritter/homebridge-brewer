@@ -19,12 +19,21 @@ export class TemperatureUtils {
     switch(value) {
       case 'Low':
         return TemperatureType.Low;
-      case 'Medium':
-        return TemperatureType.Medium;
       case 'High':
         return TemperatureType.High;
       default:
         return TemperatureType.Medium;
+    }
+  }
+
+  public static toString(type: TemperatureType) : string {
+    switch(type) {
+      case TemperatureType.Low:
+        return 'Low';
+      case TemperatureType.High:
+        return 'High';
+      default:
+        return 'Medium';
     }
   }
 }

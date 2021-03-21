@@ -1,6 +1,6 @@
 import { PlatformAccessory, Logger } from 'homebridge';
-import { CoffeeType, CoffeeTypeUtils, TemperatureType } from '../models/cofeeTypes';
-import { on, Peripheral, startScanningAsync, stopScanningAsync, Characteristic } from 'noble';
+import { CoffeeType, CoffeeTypeUtils, TemperatureType, TemperatureUtils } from '../models/cofeeTypes';
+import { on, Peripheral, startScanningAsync, stopScanningAsync, Characteristic, removeAllListeners } from 'noble';
 import MachineUDID from '../models/machineUDIDs';
 import { BrewStatus, MachineStatus } from '../models/machineStatus';
 import { ResponseStatus } from '../models/responseStatus';
@@ -52,8 +52,8 @@ export class MachineController implements IMachineController {
 
   async connect(): Promise<Characteristic[]> {
     if (this._periphial && this._periphial.state === 'connected') {
-      this.log.info('Still connected skip discovery');
-      return this.findCharacteristics(this._periphial);
+      //Make sure to disconnect first, bug on some systems like raspberry pi.
+      await this.disconnect();
     }
     this._periphial = await this.find();
     this._periphial.on('disconnect', (error: string) => {
@@ -71,13 +71,16 @@ export class MachineController implements IMachineController {
   }
 
   async disconnect() {
+    this._periphial?.removeAllListeners('disconnect');
     await this._periphial?.disconnectAsync();
     this._periphial = undefined;
+    this._lastBrew = undefined;
   }
 
   find(): Promise<Peripheral> {
+    removeAllListeners('discover');
     return new Promise((resolve, rejects) => {
-      this.log.info('Start scan');
+      this.log.info('Start scan...');
       startScanningAsync([MachineUDID.services.auth, MachineUDID.services.command], false);
       on('discover', (peripheral: Peripheral) => {
         if (peripheral.advertisement.localName === this._config.name) {
@@ -85,6 +88,7 @@ export class MachineController implements IMachineController {
             if (error) {
               rejects('Error connecting to periphial');
             } else {
+              this.log.info(`Connected to ${peripheral.advertisement.localName}`);
               resolve(peripheral);
             }
           });
@@ -185,27 +189,17 @@ export class MachineController implements IMachineController {
     });
   }
 
-  readResponse(sent: Buffer, characteristic: Characteristic) : Promise<ResponseStatus> {
-    return new Promise((resolve, rejects) => {
-      characteristic.read((error, buffer) => {
-        if (error) {
-          this.log.error(`Error reading reply: ${error}`);
-          rejects('Couldn\'t read reply!');
-        }
-        resolve(new ResponseStatus(buffer, sent));
-      });
-    });
-  }
-
   private sendBrewCommand(characteristics: Characteristic[],
     coffeeType: CoffeeType,
     temperature: TemperatureType) : Promise<ResponseStatus> {
     const command = CoffeeTypeUtils.command(coffeeType, temperature);
+    this.log.info(`Did write brew ${CoffeeTypeUtils.humanReadable(coffeeType)} - ${TemperatureUtils.toString(temperature)} command`);
     return this.sendCommand(characteristics, this.generateBuffer(command));
   }
 
   private sendCancelCommand(characteristics: Characteristic[]) : Promise<ResponseStatus> {
     const command = new Uint8Array([ 0x03, 0x06, 0x01, 0x02]);
+    this.log.info('Did write cancel command');
     return this.sendCommand(characteristics, Buffer.from(command));
   }
 
@@ -215,19 +209,18 @@ export class MachineController implements IMachineController {
       const sendChar = characteristics.find(char => char.uuid === MachineUDID.characteristics.request)!;
       this.log.debug(`Write characteristics:${sendChar}`);
       receiveChar.on('read', async (data: Buffer, isNotification: boolean) => {
-        this.log.debug(`Received response: ${data} ${isNotification}`);
+        this.log.debug(`Received response: ${data.toString('hex')} ${isNotification}`);
         if (isNotification) {
-          const response = await this.readResponse(buffer, receiveChar);
+          const response = new ResponseStatus(data, buffer);
           this.log.debug(`Response ${response}`);
           resolve(response);
         }
       });
+      this.log.debug(`Sending buffer: ${buffer.toString('hex')}`);
       sendChar!.write(buffer, true, (error) => {
         if (error) {
           this.log.error('Error writing command');
           rejects(error);
-        } else {
-          this.log.info('Did write brew command!');
         }
       });
     });

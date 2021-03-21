@@ -46,21 +46,38 @@ export class ExpertPlatformAccessory {
 
   async controlMachine(value: CharacteristicValue, type: CoffeeType) {
     const temperature = TemperatureUtils.ofString(this._config.temperature);
-    this.platform.log.info(`Temperature is ${temperature}`);
+    this.platform.log.debug(`Temperature is ${temperature}`);
     const response = value ? await this._controller.brew(type, temperature) : await this._controller.cancel();
-    this.platform.log.info(`Received response ${response?.reason} ${response?.success}`);
+    this.platform.log.debug(`Received response ${response?.reason} ${response?.success}`);
     if (value && response && !response.success) {
       this.platform.log.error(response.reason);
       const accessory = this.accessory.getService(CoffeeTypeUtils.toUDID(this.accessory, type));
-      accessory?.setCharacteristic(this.platform.Characteristic.On, false);
+      accessory?.updateCharacteristic(this.platform.Characteristic.On, false);
       throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.NOT_ALLOWED_IN_CURRENT_STATE);
     }
+  }
+
+  brewCoffee(value: CharacteristicValue, type: CoffeeType) {
+    const shouldBrew = (value === true);
+    const executor = async ()=> {
+      try {
+        await this.controlMachine(value, type);
+        if (shouldBrew) {
+          this.platform.log.info('Successfully brewed!');
+        }
+      } catch(error) {
+        if (shouldBrew) {
+          this.platform.log.info('Brew failed, no coffee...');
+        }
+      }
+    };
+    executor();
   }
 
   setOn(value: CharacteristicValue, type: CoffeeType) {
     this.platform.log.debug('Set Characteristic On ->', value);
     // Start async command, not blocking homebridge!
-    this.controlMachine(value, type);
+    this.brewCoffee(value, type);
   }
 
   getOn(type: CoffeeType): Promise<CharacteristicValue> {
