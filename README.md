@@ -100,4 +100,4 @@ These users/repositories helped making the Homekit integration possible:
 [@petergullberg](https://github.com/petergullberg) - https://github.com/petergullberg/brewbutton
 
 And me and yes, I like coffe ;)
-[<img src="https://github.com/tritter/homebridge-brewer/blob/master/.img/coffee-button.png?raw=true" height=50 >](https://www.buymeacoffee.com/tritter)
+<br>[<img src="https://github.com/tritter/homebridge-brewer/blob/master/.img/coffee-button.png?raw=true" height=50 >](https://www.buymeacoffee.com/tritter)

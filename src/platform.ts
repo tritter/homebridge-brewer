@@ -21,7 +21,11 @@ export class NespressoPlatform implements DynamicPlatformPlugin {
 
     this.api.on('didFinishLaunching', () => {
       log.debug('Start discovery');
-      this.discoverDevices();
+      try {
+        this.discoverDevices();
+      } catch(error) {
+        this.log.error('Error discovering devices:', error);
+      }
     });
 
     this.api.on('shutdown', () => {
@@ -48,6 +52,10 @@ export class NespressoPlatform implements DynamicPlatformPlugin {
     });
 
     for (const configuredDevice of configuredDevices) {
+      if (!configuredDevice.name) {
+        this.log.error('No valid device name given!');
+        return;
+      }
       const uuid = this.api.hap.uuid.generate(configuredDevice.name);
       const accessory = this.accessories.find(a => a.UUID === uuid);
       if (accessory) {
