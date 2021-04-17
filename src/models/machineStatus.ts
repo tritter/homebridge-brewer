@@ -32,8 +32,8 @@ export class MachineStatus {
           error += 'water empty + jammed';
           break;
       }
-      if ( 0x04 & buffer[0] ) {	// tray open
-        error += 'Tray open';
+      if ( 0x04 & buffer[0] ) {
+        message += 'Check your machine!';
       }
       if ( 0x84 === (buffer[1] & 0x84) ) {	// capsule engage + water pump engaged
         message += 'Brewing...';
