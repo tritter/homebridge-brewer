@@ -27,7 +27,7 @@ export class MachineController implements IMachineController {
   async brew(type: CoffeeType, temperature: TemperatureType): Promise<ResponseStatus | undefined> {
     const characteristics = await this.connect();
     const machineStatus = await this.readStatus(characteristics);
-    this.log.debug(machineStatus.toString());
+    this.log.info(machineStatus.toString());
     if (machineStatus.status === BrewStatus.Ready) {
       this.log.debug('Machine seems to be ready');
       const response = await this.sendBrewCommand(characteristics, type, temperature);
@@ -51,9 +51,9 @@ export class MachineController implements IMachineController {
   }
 
   async connect(): Promise<Characteristic[]> {
-    if (this._periphial && this._periphial.state === 'connected') {
+    if (this._periphial) {
       //Make sure to disconnect first, bug on some systems like raspberry pi.
-      await this.disconnect();
+      this.disconnect();
     }
     this._periphial = await this.find();
     this._periphial.on('disconnect', (error: string) => {
@@ -70,9 +70,9 @@ export class MachineController implements IMachineController {
     return characteristics;
   }
 
-  async disconnect() {
+  disconnect() {
     this._periphial?.removeAllListeners('disconnect');
-    await this._periphial?.disconnectAsync();
+    this._periphial?.disconnectAsync();
     this._periphial = undefined;
     this._lastBrew = undefined;
   }

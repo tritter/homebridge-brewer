@@ -48,12 +48,17 @@ export class ExpertPlatformAccessory {
     const temperature = TemperatureUtils.ofString(this._config.temperature);
     this.platform.log.debug(`Temperature is ${temperature}`);
     const response = value ? await this._controller.brew(type, temperature) : await this._controller.cancel();
-    this.platform.log.debug(`Received response ${response?.reason} ${response?.success}`);
-    if (value && response && !response.success) {
-      this.platform.log.error(response.reason);
-      const accessory = this.accessory.getService(CoffeeTypeUtils.toUDID(this.accessory, type));
+    const accessory = this.accessory.getService(CoffeeTypeUtils.toUDID(this.accessory, type));
+    if (!response) {
       accessory?.updateCharacteristic(this.platform.Characteristic.On, false);
       throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.NOT_ALLOWED_IN_CURRENT_STATE);
+    } else {
+      this.platform.log.debug(`Received response ${response?.reason} ${response?.success}`);
+      if (value && !response.success) {
+        this.platform.log.error(response.reason);
+        accessory?.updateCharacteristic(this.platform.Characteristic.On, false);
+        throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.NOT_ALLOWED_IN_CURRENT_STATE);
+      }
     }
   }
 
