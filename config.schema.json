@@ -16,17 +16,19 @@
             "placeholder": "Coffee"
           },
           "name": {
-            "title": "Name of the bluetooth device (see: )",
+            "title": "Name of the bluetooth device",
             "type": "string",
             "placeholder": "Expert_AHD34DDBADCC",
-            "required": true
+            "required": true,
+            "description": "See: https://github.com/tritter/homebridge-brewer#name"
           },
           "token": {
-            "title": "Authentication token of the bluetooth device (see: )",
+            "title": "Authentication token of the bluetooth device",
             "type": "string",
             "pattern": "^([A-Fa-f0-9]{2}-){7}[A-Fa-f0-9]{2}$",
             "placeholder": "DA-03-4B-BB-AA-CC-AA-CC",
-            "required": true
+            "required": true,
+            "description": "See: https://github.com/tritter/homebridge-brewer#token"
           },
           "temperature": {
             "title": "Temperature",

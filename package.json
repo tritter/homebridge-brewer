@@ -39,8 +39,14 @@
   "dependencies": {
     "noble": "https://github.com/abandonware/noble.git"
   },
-  "funding": {
-    "type" : "paypal",
-    "url" : "https://paypal.me/thomritterfeld"
-  }
+  "funding": [
+    {
+      "type" : "buymeacoffee",
+      "url" : "https://www.buymeacoffee.com/tritter"
+    },
+    {
+      "type" : "paypal",
+      "url" : "https://paypal.me/thomritterfeld"
+    }
+  ]
 }
