@@ -38,5 +38,9 @@
   },
   "dependencies": {
     "noble": "https://github.com/abandonware/noble.git"
+  },
+  "funding": {
+    "type" : "paypal",
+    "url" : "https://paypal.me/thomritterfeld"
   }
 }
