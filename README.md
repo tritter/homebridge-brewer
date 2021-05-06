@@ -9,7 +9,7 @@
 [Homebridge](https://github.com/nfarina/homebridge) plugin for brewing coffee with your Nespresso machines using [HomeKit](https://www.apple.com/ios/home/) accessories.
 
 ## Installation
-Make sure your system matches the prerequisites.
+Make sure your system matches the prerequisites. Also when using a weaker Bluetooth Homekit-Server (especially a Raspberry Pi), make sure its *close to the machine* before taking it furhter away. The Nespresso machines require a strong connection otherwise you will see random disconnects before the brew even started. Whenever it works you can try to move the Homekit-Server further away.
 
 [Noble](https://github.com/noble/noble) is BLE central module library for [Node.js](https://nodejs.org/) used to communicate with the coffee machines.
 
