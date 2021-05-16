@@ -11,6 +11,7 @@ export interface IMachineController {
   brew(type: CoffeeType, temperature: TemperatureType): Promise<ResponseStatus | undefined>;
   isBrewing(type: CoffeeType): Promise<boolean>;
   cancel(): Promise<ResponseStatus | undefined>;
+  disconnect(): Promise<void>;
 }
 
 export class MachineController implements IMachineController {
@@ -52,7 +53,6 @@ export class MachineController implements IMachineController {
 
   async connect(): Promise<Characteristic[]> {
     if (this._periphial) {
-      //Make sure to disconnect first, bug on some systems like raspberry pi.
       this.disconnect();
     }
     this._periphial = await this.find();
@@ -70,9 +70,11 @@ export class MachineController implements IMachineController {
     return characteristics;
   }
 
-  disconnect() {
+  async disconnect(): Promise<void> {
     this._periphial?.removeAllListeners('disconnect');
-    this._periphial?.disconnectAsync();
+    if (this._periphial?.state === 'connected') {
+      await this._periphial?.disconnectAsync();
+    }
     this._periphial = undefined;
     this._lastBrew = undefined;
   }
@@ -193,13 +195,13 @@ export class MachineController implements IMachineController {
     coffeeType: CoffeeType,
     temperature: TemperatureType) : Promise<ResponseStatus> {
     const command = CoffeeTypeUtils.command(coffeeType, temperature);
-    this.log.info(`Did write brew ${CoffeeTypeUtils.humanReadable(coffeeType)} - ${TemperatureUtils.toString(temperature)} command`);
+    this.log.info(`Writing brew ${CoffeeTypeUtils.humanReadable(coffeeType)} - ${TemperatureUtils.toString(temperature)} command`);
     return this.sendCommand(characteristics, this.generateBuffer(command));
   }
 
   private sendCancelCommand(characteristics: Characteristic[]) : Promise<ResponseStatus> {
     const command = new Uint8Array([ 0x03, 0x06, 0x01, 0x02]);
-    this.log.info('Did write cancel command');
+    this.log.info('Writing cancel command');
     return this.sendCommand(characteristics, Buffer.from(command));
   }
 

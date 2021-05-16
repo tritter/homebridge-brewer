@@ -48,6 +48,7 @@ export class ExpertPlatformAccessory {
     const temperature = TemperatureUtils.ofString(this._config.temperature);
     this.platform.log.debug(`Temperature is ${temperature}`);
     const response = value ? await this._controller.brew(type, temperature) : await this._controller.cancel();
+    this._controller.disconnect();
     const accessory = this.accessory.getService(CoffeeTypeUtils.toUDID(this.accessory, type));
     if (!response) {
       accessory?.updateCharacteristic(this.platform.Characteristic.On, false);
