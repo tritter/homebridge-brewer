@@ -54,6 +54,7 @@ Update your Homebridge `config.json` file. See [config-sample.json](config-sampl
 | `name`|| Mandatory. The bluetooth name of the machine, can be found on your phone or pc, or any bluetooth discovery app. (see below)
 | `token`||Authentication token which is required to send any commands see below ho to gather one. Make sure the format is exactly "XX-XX-XX-XX-XX-XX-XX-XX"|
 | `temperature`|"Medium"| Mandatory. The temperature which is used to brew your coffees. Can be set to "Low", "Medium" and "High".
+| `disabled_beverages`|[]| Optional. Disable the exposed switches, can be set to a list of items that shouldn't be exposed to the Home-app: ["ristretto", "espresso", "lungo", "americano", "water"]
 
 ## Name
 You can find the name quite easily add the platform and check the homebridge log. If your homebridge server has bluetooth enabled and is close enough to the machine you will see something like this:
