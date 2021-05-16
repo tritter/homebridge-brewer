@@ -3,4 +3,5 @@ export interface IDeviceConfig {
     name: string;
     token?: string;
     temperature: string;
+    disabled_beverages: string[];
 }

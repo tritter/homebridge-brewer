@@ -37,11 +37,29 @@ export class ExpertPlatformAccessory {
 
   initCoffeType(type: CoffeeType) {
     const uuid = CoffeeTypeUtils.toUDID(this.accessory, type);
-    const accessory = this.accessory.getService(uuid)
+    if (CoffeeTypeUtils.isEnabled(type, this._config)) {
+      this.platform.log.debug(`Adding coffee type ${type}`);
+      this.addCoffeeService(uuid, type);
+    } else {
+      this.platform.log.debug(`Removing coffee type ${type}`);
+      this.removeCoffeeService(uuid);
+    }
+  }
+
+  addCoffeeService(uuid: string, type: CoffeeType) {
+    const service = this.accessory.getService(uuid)
     || this.accessory.addService(this.platform.Service.Switch, CoffeeTypeUtils.humanReadable(type), uuid);
-    accessory.getCharacteristic(this.platform.Characteristic.On)
+    service.getCharacteristic(this.platform.Characteristic.On)
       .onSet((value) => this.setOn(value, type))
       .onGet(() => this.getOn(type));
+  }
+
+  removeCoffeeService(uuid: string) {
+    const service = this.accessory.getService(uuid);
+    if (service) {
+      this.accessory.removeService(service);
+      this.platform.log.info(`Did remove coffee service ${uuid}`);
+    }
   }
 
   async controlMachine(value: CharacteristicValue, type: CoffeeType) {

@@ -1,4 +1,5 @@
 import { PlatformAccessory } from 'homebridge';
+import { IDeviceConfig } from './deviceConfig';
 
 export enum CoffeeType {
     Ristretto = 0,
@@ -47,7 +48,7 @@ export class CoffeeTypeUtils {
     return commandValue + temperatureValue + coffeValue;
   }
 
-  public static toUDID(accessory: PlatformAccessory, type: CoffeeType) {
+  public static toUDID(accessory: PlatformAccessory, type: CoffeeType) : string {
     const uuid = accessory.UUID;
     let suffix: string;
     switch(type) {
@@ -70,7 +71,7 @@ export class CoffeeTypeUtils {
     return uuid.slice(0, suffix.length) + suffix;
   }
 
-  public static humanReadable(type: CoffeeType) {
+  public static humanReadable(type: CoffeeType) : string {
     switch(type) {
       case CoffeeType.Ristretto:
         return 'Ristretto';
@@ -83,5 +84,12 @@ export class CoffeeTypeUtils {
       case CoffeeType.Water:
         return 'Water';
     }
+  }
+
+  public static isEnabled(type: CoffeeType, config: IDeviceConfig) : boolean {
+    if (config && config.disabled_beverages) {
+      return !config.disabled_beverages.some(b => b.toLowerCase() === this.humanReadable(type).toLowerCase());
+    }
+    return true; //default
   }
 }
