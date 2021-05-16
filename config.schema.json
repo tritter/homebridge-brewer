@@ -41,6 +41,21 @@
               "Low",
               "High"
             ]
+          },
+          "disabled_beverages": {
+            "title": "Disabled beverages",
+            "type": "array",
+            "items": {
+              "title": "Disabled",
+              "type": "string",
+              "enum": [
+                "ristretto",
+                "espresso",
+                "lungo",
+                "americano",
+                "water"
+              ]
+            }
           }
         }
       }
