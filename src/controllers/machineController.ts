@@ -7,7 +7,7 @@ import { ResponseStatus } from '../models/responseStatus';
 import { IDeviceConfig } from '../models/deviceConfig';
 import { SliderStatus } from '../models/sliderStatus';
 import { CapsuleCount } from '../models/capsuleCount';
-import EventEmitter from 'node:events';
+import EventEmitter from 'events';
 
 export interface IMachineController {
   isConnected(): boolean;
