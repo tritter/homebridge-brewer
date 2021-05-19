@@ -6,6 +6,7 @@ import { SliderStatus } from './models/SliderStatus';
 import { IServiceController, ServiceController } from './controllers/serviceController';
 import { CapsuleCount } from './models/capsuleCount';
 import { MachineStatus } from './models/machineStatus';
+import { MachineController } from './controllers/machineController';
 
 export class ExpertPlatformAccessory {
   private static WATCHDOG_INTERVAL = 1; //in minutes
