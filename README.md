@@ -55,6 +55,7 @@ Update your Homebridge `config.json` file. See [config-sample.json](config-sampl
 | `token`||Authentication token which is required to send any commands see below ho to gather one. Make sure the format is exactly "XX-XX-XX-XX-XX-XX-XX-XX"|
 | `temperature`|"Medium"| Mandatory. The temperature which is used to brew your coffees. Can be set to "Low", "Medium" and "High".
 | `disabled_beverages`|[]| Optional. Disable the exposed switches, can be set to a list of items that shouldn't be exposed to the Home-app: ["ristretto", "espresso", "lungo", "americano", "water"]
+| `max_capsule_count`|1000| Optional. Set your maximum capsule count. The capsule count is displayed as battery percentage: 500 of 1000 (capsule_count) == 50%. Value can be between 1-1000.
 
 ## Name
 You can find the name quite easily add the platform and check the homebridge log. If your homebridge server has bluetooth enabled and is close enough to the machine you will see something like this:
