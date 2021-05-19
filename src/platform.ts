@@ -17,7 +17,7 @@ export class NespressoPlatform implements DynamicPlatformPlugin {
     public readonly config: PlatformConfig,
     public readonly api: API,
   ) {
-    this.log.debug('Finished initializing platform:', this.config.name);
+    this.log.debug('Finished initializing platform');
 
     this.api.on('didFinishLaunching', () => {
       log.debug('Start discovery');
@@ -48,6 +48,8 @@ export class NespressoPlatform implements DynamicPlatformPlugin {
     on('discover', (peripheral: Peripheral) => {
       if (!devicesMap[peripheral.advertisement.localName]) {
         this.log.info(`Found new device, please add configuration for: "${peripheral.advertisement.localName}"`);
+      } else {
+        this.log.debug(`Found ${peripheral.advertisement.localName}, already configured`);
       }
     });
 

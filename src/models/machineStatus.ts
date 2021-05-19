@@ -1,69 +1,100 @@
-export enum BrewStatus {
-  Unknown,
-  Ready,
-  Busy,
-  Error
+export enum MachineState {
+  Unknown = 0,
+  NoWater = 1,
+  NeedsDescealing = 4,
+  TrayJammed = 16,
+  Error = 32,
+  Ok = 64
+}
+
+export enum BrewState {
+  Unknown = 0,
+  LowTemperature = 1,
+  Ready = 2,
+  Pumping = 4,
+  Sleeping = 8,
+  TrayJammed = 16,
+  TrayOpen = 64,
+  CapsuleEngaged = 128
 }
 
 export class MachineStatus {
-    public readonly status: BrewStatus;
-    public readonly statusMessage: string;
-    public readonly errorMessage: string;
+    public readonly machineState: MachineState;
+    public readonly brewState: BrewState;
 
     constructor(buffer: Buffer) {
-      this.status = BrewStatus.Ready;
-      let message = '';
-      let error = '';
+      this.machineState = buffer[0];
+      this.brewState = buffer[1];
 
-
-      if ( buffer[0] & 0x01 ) {
-        // Water empty
-        error += 'no water ';
+      const machineStateBuffer = buffer[0];
+      if (this.containsFlag(machineStateBuffer, MachineState.Ok)) {
+        this.machineState |= MachineState.Ok;
       }
-
-      switch ( buffer[0] & 0x11 ) {
-        case 0x01:						 // Water empty
-          error += 'water empty';
-          break;
-        case 0x10:						// It seems that these correpsonds with water empty
-          error += 'Capsule mechanism jammed';
-          break;
-        case 0x11:
-          error += 'water empty + jammed';
-          break;
+      if (this.containsFlag(machineStateBuffer, MachineState.NoWater)) {
+        this.machineState |= MachineState.NoWater;
       }
-      if ( 0x04 & buffer[0] ) {
-        message += 'Check your machine!';
+      if (this.containsFlag(machineStateBuffer, MachineState.NeedsDescealing)) {
+        this.machineState |= MachineState.NeedsDescealing;
       }
-      if ( 0x84 === (buffer[1] & 0x84) ) {	// capsule engage + water pump engaged
-        message += 'Brewing...';
-        this.status = BrewStatus.Busy;
+      if (this.containsFlag(machineStateBuffer, MachineState.TrayJammed)) {
+        this.machineState |= MachineState.TrayJammed;
       }
-      if ( 0x04 === (buffer[1] & 0x84) ) {	// water pump engaged
-        message += 'Pumping...';
-        this.status = BrewStatus.Busy;
-      }
-      if ( 0x40 & buffer[1] ) {	// tray open
-        error += 'Tray open/sensor full';
-      }
-      if ( 0x09 === (buffer[1] & 0x09 ) ) {
-        message += 'Device is sleeping';
-      }
-      if ( 0x01 === (buffer[1] & 0x09 ) ) {
-        error += 'Low water';
-      }
-      if ( 0x02 & buffer[1]) {
-        message += 'Ok';
+      if (this.containsFlag(machineStateBuffer, MachineState.Error)) {
+        this.machineState |= MachineState.Error;
       }
 
-      this.errorMessage = error;
-      this.statusMessage = message;
-      if (error.length > 0) {
-        this.status = BrewStatus.Error;
+      const brewStateBuffer = buffer[1];
+      if (this.containsFlag(brewStateBuffer, BrewState.Unknown)) {
+        this.brewState |= BrewState.Unknown;
+      }
+      if (this.containsFlag(brewStateBuffer, BrewState.LowTemperature)) {
+        this.brewState |= BrewState.LowTemperature;
+      }
+      if (this.containsFlag(brewStateBuffer, BrewState.Ready)) {
+        this.brewState |= BrewState.Ready;
+      }
+      if (this.containsFlag(brewStateBuffer, BrewState.Sleeping)) {
+        this.brewState |= BrewState.Sleeping;
+      }
+      if (this.containsFlag(brewStateBuffer, BrewState.TrayJammed)) {
+        this.brewState |= BrewState.TrayJammed;
+      }
+      if (this.containsFlag(brewStateBuffer, BrewState.TrayOpen)) {
+        this.brewState |= BrewState.TrayOpen;
+      }
+      if (this.containsFlag(brewStateBuffer, BrewState.CapsuleEngaged)) {
+        this.brewState |= BrewState.CapsuleEngaged;
       }
     }
 
+    containsFlag(number: number, flag: number) {
+      return (number & flag) === flag;
+    }
+
+    public readyToBrew(): boolean {
+      return this.containsFlag(this.machineState, MachineState.Ok)
+      && !this.trayError() && !this.isBrewing();
+    }
+
+    public isBrewing(): boolean {
+      return this.containsFlag(this.brewState, BrewState.Pumping);
+    }
+
+    public noWater(): boolean {
+      return this.containsFlag(this.machineState, MachineState.NoWater);
+    }
+
+    public trayError(): boolean {
+      return this.containsFlag(this.machineState, MachineState.TrayJammed)
+      || this.containsFlag(this.brewState, BrewState.TrayJammed)
+      || this.containsFlag(this.brewState, BrewState.TrayOpen);
+    }
+
+    public needsDescealing(): boolean {
+      return this.containsFlag(this.machineState, MachineState.NeedsDescealing);
+    }
+
     public toString() : string {
-      return `${this.status}: ${this.statusMessage} ${this.errorMessage}`;
+      return `Ready:${this.readyToBrew()}, brewing:${this.isBrewing()}, no water:${this.noWater()}, tray error:${this.trayError()}`;
     }
 }

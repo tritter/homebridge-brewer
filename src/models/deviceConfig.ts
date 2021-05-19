@@ -4,4 +4,5 @@ export interface IDeviceConfig {
     token?: string;
     temperature: string;
     disabled_beverages: string[];
+    max_capsule_count: number;
 }

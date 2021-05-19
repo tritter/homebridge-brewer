@@ -15,6 +15,13 @@ export enum TemperatureType {
     High = 2
 }
 
+export class AccessoryUtils {
+  public static toUDID(accessory: PlatformAccessory, suffix: string) {
+    const uuid = accessory.UUID;
+    return uuid.slice(0, suffix.length) + suffix;
+  }
+}
+
 export class TemperatureUtils {
   public static ofString(value: string) : TemperatureType {
     switch(value) {
@@ -40,6 +47,10 @@ export class TemperatureUtils {
 }
 
 export class CoffeeTypeUtils {
+  public static all() : CoffeeType[] {
+    return [CoffeeType.Ristretto, CoffeeType.Espresso, CoffeeType.Lungo, CoffeeType.Americano, CoffeeType.Water];
+  }
+
   public static command(type: CoffeeType, temperature: TemperatureType) {
     const zeroPad = (num: number) => String(num).padStart(2, '0');
     const commandValue = '0305070400000000';
@@ -49,7 +60,6 @@ export class CoffeeTypeUtils {
   }
 
   public static toUDID(accessory: PlatformAccessory, type: CoffeeType) : string {
-    const uuid = accessory.UUID;
     let suffix: string;
     switch(type) {
       case CoffeeType.Ristretto:
@@ -68,7 +78,7 @@ export class CoffeeTypeUtils {
         suffix = 'wat';
         break;
     }
-    return uuid.slice(0, suffix.length) + suffix;
+    return AccessoryUtils.toUDID(accessory, suffix);
   }
 
   public static humanReadable(type: CoffeeType) : string {
@@ -90,6 +100,6 @@ export class CoffeeTypeUtils {
     if (config && config.disabled_beverages) {
       return !config.disabled_beverages.some(b => b.toLowerCase() === this.humanReadable(type).toLowerCase());
     }
-    return true; //default
+    return true;
   }
 }
