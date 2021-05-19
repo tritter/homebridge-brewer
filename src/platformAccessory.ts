@@ -2,7 +2,7 @@ import { PlatformAccessory, CharacteristicValue } from 'homebridge';
 import { CoffeeType, CoffeeTypeUtils, TemperatureUtils } from './models/cofeeTypes';
 import { NespressoPlatform } from './platform';
 import { IDeviceConfig } from './models/deviceConfig';
-import { SliderStatus } from './models/SliderStatus';
+import { SliderStatus } from './models/sliderStatus';
 import { IServiceController, ServiceController } from './controllers/serviceController';
 import { CapsuleCount } from './models/capsuleCount';
 import { MachineStatus } from './models/machineStatus';

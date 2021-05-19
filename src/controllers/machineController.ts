@@ -5,7 +5,7 @@ import MachineUDID from '../models/machineUDIDs';
 import { MachineStatus } from '../models/machineStatus';
 import { ResponseStatus } from '../models/responseStatus';
 import { IDeviceConfig } from '../models/deviceConfig';
-import { SliderStatus } from '../models/SliderStatus';
+import { SliderStatus } from '../models/sliderStatus';
 import { CapsuleCount } from '../models/capsuleCount';
 import EventEmitter from 'node:events';
 
