@@ -1,12 +1,11 @@
-import { PlatformAccessory, CharacteristicValue, Service, Characteristic, HapStatusError } from 'homebridge';
-import { AccessoryUtils, CoffeeType, CoffeeTypeUtils, TemperatureUtils } from './models/cofeeTypes';
+import { PlatformAccessory, CharacteristicValue } from 'homebridge';
+import { CoffeeType, CoffeeTypeUtils, TemperatureUtils } from './models/cofeeTypes';
 import { NespressoPlatform } from './platform';
-import { IMachineController, MachineController } from './controllers/machineController';
 import { IDeviceConfig } from './models/deviceConfig';
 import { SliderStatus } from './models/SliderStatus';
 import { IServiceController, ServiceController } from './controllers/serviceController';
 import { CapsuleCount } from './models/capsuleCount';
-import { MachineState, MachineStatus } from './models/machineStatus';
+import { MachineStatus } from './models/machineStatus';
 
 export class ExpertPlatformAccessory {
   private static WATCHDOG_INTERVAL = 1; //in minutes

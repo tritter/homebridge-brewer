@@ -8,8 +8,6 @@ import { IDeviceConfig } from '../models/deviceConfig';
 import { SliderStatus } from '../models/SliderStatus';
 import { CapsuleCount } from '../models/capsuleCount';
 import EventEmitter from 'node:events';
-import { rejects } from 'node:assert';
-
 
 export interface IMachineController {
   isConnected(): boolean;
