@@ -3,13 +3,16 @@ export class CapsuleCount {
     public readonly capsulesLeft: number;
 
     constructor(buffer: Buffer) {
-      const count = buffer[0];
-      this.enabled = (count !== 0xffff);
-      if (this.enabled) {
-        this.capsulesLeft = buffer.readInt16BE(0);
-      } else {
-        this.capsulesLeft = 0;
-      }
+      console.log(buffer.length);
+      console.log(buffer.toString('hex'));
+      // const count = buffer[0];
+      this.enabled = false;
+      // this.enabled = (count !== 0xffff);
+      // if (this.enabled) {
+      //   this.capsulesLeft = buffer.readInt16BE(0);
+      // } else {
+      this.capsulesLeft = 0;
+      // }
     }
 
     public toString() : string {

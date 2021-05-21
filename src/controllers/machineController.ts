@@ -49,7 +49,7 @@ export class MachineController extends EventEmitter implements IMachineControlle
   }
 
   isConnected(): boolean {
-    return this._periphial?.state === 'connected';
+    return this._periphial?.state === 'connected' || this._periphial?.state === 'connecting';
   }
 
   async isBrewing(type: CoffeeType): Promise<boolean> {
@@ -101,8 +101,8 @@ export class MachineController extends EventEmitter implements IMachineControlle
       this.reconnect();
     });
     await this.authenticate(characteristics);
-    await this.subscribe(characteristics);
-    this.updateStates(characteristics);
+    // await this.subscribe(characteristics);
+    await this.updateStates(characteristics);
     return characteristics;
   }
 
@@ -114,10 +114,12 @@ export class MachineController extends EventEmitter implements IMachineControlle
   }
 
   async disconnect(): Promise<void> {
-    this._periphial?.removeAllListeners('disconnect');
-    if (this._periphial?.state === 'connected') {
-      this.log.debug('Disconnecting...');
+    this._periphial?.removeAllListeners();
+    this.log.debug('Disconnecting...');
+    if (this.isConnected()) {
       await this._periphial?.disconnectAsync();
+    } else {
+      this._periphial?.disconnect();
     }
     this._periphial = undefined;
     this._lastBrew = undefined;
@@ -154,6 +156,7 @@ export class MachineController extends EventEmitter implements IMachineControlle
         on('discover', (peripheral: Peripheral) => {
           if (peripheral.advertisement.localName === this._config.name) {
             removeAllListeners('discover');
+            stopScanningAsync();
             peripheral.connect((error) => {
               if (error) {
                 rejects('Error connecting to periphial');
@@ -162,7 +165,6 @@ export class MachineController extends EventEmitter implements IMachineControlle
                 resolve(peripheral);
               }
             });
-            stopScanningAsync();
           }
         });
 
@@ -196,7 +198,9 @@ export class MachineController extends EventEmitter implements IMachineControlle
   private generateKey(): Buffer{
     const token = this._config.token?.replace(/-/g, '') ?? '';
     this.log.debug(`Token: ${token}`);
-    return this.generateBuffer(token);
+    const buffer = this.generateBuffer(token);
+    this.log.debug(`Token buffer: ${buffer.toString('hex')}`);
+    return buffer;
   }
 
   private generateBuffer(hex: string): Buffer {
@@ -217,13 +221,14 @@ export class MachineController extends EventEmitter implements IMachineControlle
     return new Promise((resolve, rejects) => {
       this.log.debug('Start subscribe status');
       const statusCharacteristic = characteristics.find(char => char.uuid === MachineUDID.characteristics.status)!;
+      statusCharacteristic.removeAllListeners();
       this.log.debug(`Found notify status characteristic ${statusCharacteristic}`);
       statusCharacteristic.on('notify', (state: string) => {
         this.log.debug(`New notify ${state}`);
         state ? resolve() : rejects('Couldn\'t enable status notify');
       });
-      statusCharacteristic.on('read', async (data: Buffer) => {
-        this.log.debug('Received machine status change!');
+      statusCharacteristic.on('data', (data: Buffer) => {
+        this.log.debug(`Received machine status change!, ${data.toString('hex')}`);
         this._lastStatus = new MachineStatus(data);
         this.emit('status', this._lastStatus);
       });
@@ -239,13 +244,14 @@ export class MachineController extends EventEmitter implements IMachineControlle
     return new Promise((resolve, rejects) => {
       this.log.debug('Start subscribe status');
       const statusCharacteristic = characteristics.find(char => char.uuid === MachineUDID.characteristics.slider)!;
+      statusCharacteristic.removeAllListeners();
       this.log.debug(`Found notify slider characteristic ${statusCharacteristic}`);
       statusCharacteristic.on('notify', (state: string) => {
         this.log.debug(`New notify ${state}`);
         state ? resolve() : rejects('Couldn\'t enable status notify');
       });
-      statusCharacteristic.on('read', async (data: Buffer) => {
-        this.log.debug('Received slider status change!');
+      statusCharacteristic.on('data', (data: Buffer) => {
+        this.log.debug(`Received slider status change! ${data.toString('hex')}`);
         this.emit('slider', new SliderStatus(data));
       });
       statusCharacteristic.notify(true, (error) => {
@@ -260,13 +266,14 @@ export class MachineController extends EventEmitter implements IMachineControlle
     return new Promise((resolve, rejects) => {
       this.log.debug('Start subscribe capsule counter');
       const capsuleCharacteristic = characteristics.find(char => char.uuid === MachineUDID.characteristics.capsules)!;
+      capsuleCharacteristic.removeAllListeners();
       this.log.debug(`Found capsule count characteristic ${capsuleCharacteristic}`);
       capsuleCharacteristic.on('notify', (state: string) => {
         this.log.debug(`New notify ${state}`);
         state ? resolve() : rejects('Couldn\'t enable status notify');
       });
-      capsuleCharacteristic.on('read', async (data: Buffer) => {
-        this.log.debug('Received capsule count change!');
+      capsuleCharacteristic.on('data', (data: Buffer) => {
+        this.log.debug(`Received capsule count change! ${data.toString('hex')}`);
         this.emit('capsule', new CapsuleCount(data));
       });
       capsuleCharacteristic.notify(true, (error) => {
@@ -281,6 +288,7 @@ export class MachineController extends EventEmitter implements IMachineControlle
     return new Promise((resolve, rejects) => {
       this.log.debug('Start subscribe response');
       const responseCharacteristic = characteristics.find(char => char.uuid === MachineUDID.characteristics.response)!;
+      responseCharacteristic.removeAllListeners();
       this.log.debug(`Found response characteristic ${responseCharacteristic}`);
       responseCharacteristic.on('notify', (state: string) => {
         this.log.debug(`New notify ${state}`);
@@ -294,14 +302,18 @@ export class MachineController extends EventEmitter implements IMachineControlle
     });
   }
 
-  private updateStates(characteristics: Characteristic[]) {
+  private async updateStates(characteristics: Characteristic[]) {
     this.log.debug('Request reading states');
     const statusCharacteristic = characteristics.find(char => char.uuid === MachineUDID.characteristics.status)!;
-    const capsulesCharacteristic = characteristics.find(char => char.uuid === MachineUDID.characteristics.capsules)!;
-    const sliderCharacteristic = characteristics.find(char => char.uuid === MachineUDID.characteristics.slider)!;
-    statusCharacteristic.read();
-    capsulesCharacteristic.read();
-    sliderCharacteristic.read();
+    // const capsulesCharacteristic = characteristics.find(char => char.uuid === MachineUDID.characteristics.capsules)!;
+    // const sliderCharacteristic = characteristics.find(char => char.uuid === MachineUDID.characteristics.slider)!;
+    statusCharacteristic.read((error, data) => {
+      this.log.debug(`Data read: ${data}`);
+    });
+    const data = await statusCharacteristic.readAsync();
+    this.log.debug(`async Data ${data}`);
+    // capsulesCharacteristic.read();
+    // sliderCharacteristic.read();
   }
 
   private sendBrewCommand(characteristics: Characteristic[],
@@ -323,18 +335,13 @@ export class MachineController extends EventEmitter implements IMachineControlle
       const receiveChar = characteristics.find(char => char.uuid === MachineUDID.characteristics.response)!;
       const sendChar = characteristics.find(char => char.uuid === MachineUDID.characteristics.request)!;
       this.log.debug(`Write characteristics:${sendChar}`);
-      let emitter: EventEmitter | undefined = undefined;
-      const readHandler = async (data: Buffer, isNotification: boolean) => {
+      receiveChar.once('data', (data: Buffer) => {
         this.log.debug(`Received response: ${data.toString('hex')}`);
-        if (isNotification) {
-          this.updateStates(characteristics);
-          const response = new ResponseStatus(data, buffer);
-          this.log.debug(`Response ${response}`);
-          emitter?.removeListener('read', readHandler);
-          resolve(response);
-        }
-      };
-      emitter = receiveChar.on('read', readHandler);
+        this.updateStates(characteristics);
+        const response = new ResponseStatus(data, buffer);
+        this.log.debug(`Response ${response}`);
+        resolve(response);
+      });
       this.log.debug(`Sending buffer: ${buffer.toString('hex')}`);
       this._lastStatus = undefined;
       sendChar!.write(buffer, true, (error) => {
