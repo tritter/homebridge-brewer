@@ -42,7 +42,7 @@ export class NespressoPlatform implements DynamicPlatformPlugin {
   discoverDevices() {
     const configuredDevices: IDeviceConfig[] = this.config['machines'] ?? new Array<IDeviceConfig>();
     const devicesMap = configuredDevices.reduce((a, x) => ({...a, [x.name]: x.token}), {});
-    this.log.debug(`"Configured machines: ${configuredDevices.length}"`);
+    this.log.debug(`Configured machines: ${configuredDevices.length}`);
     this.log.debug('Start discovery');
     startScanningAsync([MachineUDID.services.auth, MachineUDID.services.command], false);
     on('discover', (peripheral: Peripheral) => {

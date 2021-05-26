@@ -9,7 +9,7 @@ import { MachineStatus } from './models/machineStatus';
 import { MachineController } from './controllers/machineController';
 
 export class ExpertPlatformAccessory {
-  private static WATCHDOG_INTERVAL = 1; //in minutes
+  private static WATCHDOG_INTERVAL_MS = 1000 * 60 * 1; //one minute
   private readonly _controller: MachineController;
   private readonly _services: IServiceController;
   private readonly _config: IDeviceConfig;
@@ -74,7 +74,7 @@ export class ExpertPlatformAccessory {
   }
 
   getOn(type: CoffeeType): Promise<CharacteristicValue> {
-    if (!this._controller.isConnected()) {
+    if (!this._controller.isReachable()) {
       this.platform.log.debug('Device not connected!');
       throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
     }
@@ -84,8 +84,8 @@ export class ExpertPlatformAccessory {
   }
 
   startConnectionDog() {
-    this.platform.log.debug('Start connection watchdog');
-    const interval = 1000 * 60 * ExpertPlatformAccessory.WATCHDOG_INTERVAL;
+    this.platform.log.debug('[WATCH] Start connection');
+    const interval = ExpertPlatformAccessory.WATCHDOG_INTERVAL_MS;
     setInterval(() => {
       this.watch();
     }, interval);
@@ -93,11 +93,14 @@ export class ExpertPlatformAccessory {
 
   watch() {
     if (this._controller.isConnected()) {
-      this.platform.log.debug('Watchdog: connected');
+      this.platform.log.debug('[WATCH] Connected');
+    } else if (this._controller.isReachable()){
+      this.platform.log.debug(`[WATCH] Machine ${this._config.name} disconnected, but reachable`);
+    } else if (this._controller.isScanning()){
+      this.platform.log.info(`[WATCH] Machine ${this._config.name} unreachable, still scanning`);
     } else {
-      this.platform.log.debug(`Watchdog: Machine ${this._config.name} unreachable`);
-      this.platform.log.info('Machine disconnected, this seems unintended try to move your hombridge server closer to the machine!');
-      this._controller.connect();
+      this.platform.log.info('[WATCH] Unreachable, this seems unintended try to move your hombridge server closer to the machine!');
+      this._controller.reconnect();
     }
   }
 

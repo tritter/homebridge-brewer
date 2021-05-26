@@ -11,6 +11,8 @@ import EventEmitter from 'events';
 
 export interface IMachineController {
   isConnected(): boolean;
+  isReachable(): boolean;
+  isScanning(): boolean;
   isBrewing(type: CoffeeType): Promise<boolean>;
   brew(type: CoffeeType, temperature: TemperatureType): Promise<ResponseStatus | undefined>;
   cancel(): Promise<ResponseStatus | undefined>;
@@ -26,10 +28,15 @@ export interface IMachineControllerEvents {
 }
 
 export class MachineController extends EventEmitter implements IMachineController, IMachineControllerEvents {
+  private static CONNECTION_TIMEOUT_MS = 1000 * 1; //1 second
+  private static RECONNECT_TIMEOUT_MS = 1000 * 10; //10 second
+  private static UNREACHABLE_TIMEOUT = 1000 * 60 * 5; //5 min
   private readonly _config: IDeviceConfig;
   private _periphial: Peripheral | undefined;
   private _lastBrew: CoffeeType | undefined;
   private _lastStatus: MachineStatus | undefined;
+  private _scanning = false;
+  private _lastContact: Date | undefined;
 
   constructor(
     public readonly log: Logger,
@@ -50,6 +57,22 @@ export class MachineController extends EventEmitter implements IMachineControlle
 
   isConnected(): boolean {
     return this._periphial?.state === 'connected' || this._periphial?.state === 'connecting';
+  }
+
+  isReachable(): boolean {
+    if (this.isConnected()) {
+      return true;
+    }
+    if (!this._lastContact) {
+      return false;
+    }
+    const now = new Date().getTime();
+    const last = this._lastContact.getTime();
+    return (now - last) < MachineController.UNREACHABLE_TIMEOUT;
+  }
+
+  isScanning(): boolean {
+    return this._scanning;
   }
 
   async isBrewing(type: CoffeeType): Promise<boolean> {
@@ -92,16 +115,20 @@ export class MachineController extends EventEmitter implements IMachineControlle
     await this.disconnect();
     this._periphial = await this.find();
     const characteristics = await this.findCharacteristics(this._periphial!);
-    this._periphial.on('disconnect', (error: string) => {
+    this._periphial.on('disconnect', async (error: string) => {
       this.log.debug('Machine did disconnect!');
+      this._lastContact = new Date();
       this._lastBrew = undefined;
       if (error) {
         this.log.error(error);
       }
+      await new Promise(resolve => setTimeout(resolve, MachineController.RECONNECT_TIMEOUT_MS));
       this.reconnect();
     });
+    await new Promise(resolve => setTimeout(resolve, MachineController.CONNECTION_TIMEOUT_MS));
+    await this.updateStates(characteristics); //We need this call to fix a encryption bug inside noble!
     await this.authenticate(characteristics);
-    // await this.subscribe(characteristics);
+    await this.subscribe(characteristics);
     await this.updateStates(characteristics);
     return characteristics;
   }
@@ -152,12 +179,12 @@ export class MachineController extends EventEmitter implements IMachineControlle
     return new Promise((resolve, rejects) => {
       this.assertBluetooth().then(() => {
         this.log.debug('Start scan...');
-        startScanningAsync([MachineUDID.services.auth, MachineUDID.services.command], false);
         on('discover', (peripheral: Peripheral) => {
           if (peripheral.advertisement.localName === this._config.name) {
             removeAllListeners('discover');
             stopScanningAsync();
             peripheral.connect((error) => {
+              this._scanning = false;
               if (error) {
                 rejects('Error connecting to periphial');
               } else {
@@ -167,7 +194,8 @@ export class MachineController extends EventEmitter implements IMachineControlle
             });
           }
         });
-
+        this._scanning = true;
+        startScanningAsync([MachineUDID.services.auth, MachineUDID.services.command], true);
       }).catch();
     });
   }
@@ -305,15 +333,11 @@ export class MachineController extends EventEmitter implements IMachineControlle
   private async updateStates(characteristics: Characteristic[]) {
     this.log.debug('Request reading states');
     const statusCharacteristic = characteristics.find(char => char.uuid === MachineUDID.characteristics.status)!;
-    // const capsulesCharacteristic = characteristics.find(char => char.uuid === MachineUDID.characteristics.capsules)!;
-    // const sliderCharacteristic = characteristics.find(char => char.uuid === MachineUDID.characteristics.slider)!;
-    statusCharacteristic.read((error, data) => {
-      this.log.debug(`Data read: ${data}`);
-    });
-    const data = await statusCharacteristic.readAsync();
-    this.log.debug(`async Data ${data}`);
-    // capsulesCharacteristic.read();
-    // sliderCharacteristic.read();
+    const capsulesCharacteristic = characteristics.find(char => char.uuid === MachineUDID.characteristics.capsules)!;
+    const sliderCharacteristic = characteristics.find(char => char.uuid === MachineUDID.characteristics.slider)!;
+    statusCharacteristic.read();
+    capsulesCharacteristic.read();
+    sliderCharacteristic.read();
   }
 
   private sendBrewCommand(characteristics: Characteristic[],
