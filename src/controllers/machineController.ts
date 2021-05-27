@@ -8,6 +8,7 @@ import { IDeviceConfig } from '../models/deviceConfig';
 import { SliderStatus } from '../models/sliderStatus';
 import { CapsuleCount } from '../models/capsuleCount';
 import EventEmitter from 'events';
+import os from 'os';
 
 export interface IMachineController {
   isConnected(): boolean;
@@ -126,11 +127,22 @@ export class MachineController extends EventEmitter implements IMachineControlle
       this.reconnect();
     });
     await new Promise(resolve => setTimeout(resolve, MachineController.CONNECTION_TIMEOUT_MS));
-    await this.updateStates(characteristics); //We need this call to fix a encryption bug inside noble!
+    if (this.needsPairingFix()) {
+      await this.updateStates(characteristics);
+    }
     await this.authenticate(characteristics);
     await this.subscribe(characteristics);
     await this.updateStates(characteristics);
     return characteristics;
+  }
+
+  private needsPairingFix() : boolean {
+    //We need this call to fix a encryption bug inside hci-socket!
+    //If we call this on a mac, it breaks. Only tested for RaspberryPi.
+    //The problem relies inside acl-stream.js, nespresso expects SMP-pairing after connect.
+    //Noble is doing a dynamic SMP-pairing which is triggered by a simple read.
+    const platform = os.platform();
+    return (platform === 'linux' || platform === 'freebsd' || platform === 'win32');
   }
 
   async subscribe(characteristics: Characteristic[]) {
