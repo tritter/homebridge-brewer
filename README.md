@@ -8,6 +8,26 @@
 
 [Homebridge](https://github.com/nfarina/homebridge) plugin for brewing coffee with your Nespresso machines using [HomeKit](https://www.apple.com/ios/home/) accessories.
 
+## Features
+With this plugin you can brew coffee using Siri and schedule your coffee within your 'Good Morning' Scene! The plugin exposes the following switches to Homekit: Ristretto, Espresso, Lungo, Americano, Water.
+Besides, there are also sensors: 
+
+| Sensor | Description |
+|----------|----------|
+|Brewing| Opens whenever the brew starts, closes when the brew finishes. |
+|Descealing Needed| Opens whenever descealing is needed. |
+|No Capsules| Opens whenever you ran out of capsules. (Make sure to setup correctly) |
+|No Water| Opens whenever there is no water in the tank. |
+|Sliders| Opens/Closes together with the capsule-slider on your machine. |
+|Tray Error| Opens whenever a capsule jams the tray or whenever the capsule tray is full. |
+
+### Capsule Count
+The status of the capsule count is reflected using the battery level inside the Home App. By default the 'max_capsule_count' count is 1000, this is the maximum number your machine can decrement. First make sure to setup the amount of capsules left inside the Nespresso App. *Whenever this plugin runs, you can't connect via the app, because the machine can only connect one device at a time!*
+
+<img src="https://github.com/tritter/homebridge-brewer/blob/master/.img/capsules_left.jpg?raw=true" height=250 >
+
+Let's say 500. This means that the battery percentage will be 50%; 500 capsules left of the max_capsule_count 1000. Below 10% Homekit will provide a low battery warning to remind you to order new cups.
+
 ## Installation
 Make sure your system matches the prerequisites. Also when using a weaker Bluetooth Homekit-Server (especially a Raspberry Pi), make sure its *close to the machine* before taking it furhter away. The Nespresso machines require a strong connection otherwise you will see random disconnects before the brew even started. Whenever it works you can try to move the Homekit-Server further away.
 
