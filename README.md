@@ -18,7 +18,7 @@ Besides, there are also sensors:
 |Descealing Needed| Opens whenever descealing is needed. |
 |No Capsules| Opens whenever you ran out of capsules. (Make sure to setup correctly) |
 |No Water| Opens whenever there is no water in the tank. |
-|Sliders| Opens/Closes together with the capsule-slider on your machine. |
+|Slider| Opens/Closes together with the capsule-slider on your machine. |
 |Tray Error| Opens whenever a capsule jams the tray or whenever the capsule tray is full. |
 
 ### Capsule Count
