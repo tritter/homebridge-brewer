@@ -167,10 +167,17 @@ export class ExpertPlatformAccessory {
     service?.updateCharacteristic(this.platform.Characteristic.ContactSensorState, value);
     const batteryService = this._services.batteryService();
     const maxCount = this.normalizedMaxCapsuleCount();
+    if (maxCount === 0) {
+      batteryService?.updateCharacteristic(this.platform.Characteristic.BatteryLevel, 100);
+      batteryService?.updateCharacteristic(this.platform.Characteristic.StatusLowBattery,
+        this.platform.Characteristic.StatusLowBattery.BATTERY_LEVEL_NORMAL);
+      return;
+    }
     const capsulesLeft = capsuleCount.capsulesLeft;
     const percentage = Math.floor((capsulesLeft / Math.max(maxCount, capsulesLeft)) * 100);
     this.platform.log.debug(`Percentage ${percentage}`);
-    batteryService?.updateCharacteristic(this.platform.Characteristic.BatteryLevel, percentage);
+    batteryService?.updateCharacteristic(this.platform.Characteristic.BatteryLevel,
+      percentage <= 0 ? 0 : (percentage >= 100 ? 100 : percentage));
     const level = percentage < 10 ? this.platform.Characteristic.StatusLowBattery.BATTERY_LEVEL_LOW
       : this.platform.Characteristic.StatusLowBattery.BATTERY_LEVEL_NORMAL;
     batteryService?.updateCharacteristic(this.platform.Characteristic.StatusLowBattery, level);
@@ -178,14 +185,11 @@ export class ExpertPlatformAccessory {
 
   normalizedMaxCapsuleCount(): number {
     const configuredCount = this._config.max_capsule_count;
-    if (isNaN(configuredCount)) {
-      this.platform.log.debug('max_capsule_count not configured using 1000');
-      return 1000;
+    if (isNaN(configuredCount) || configuredCount <= 0) {
+      this.platform.log.debug('max_capsule_count not configured using 0');
+      return 0;
     }
-    if (configuredCount< 0) {
-      this.platform.log.error('max_capsule_count below 0 does not make any sense!');
-      return 1;
-    } else if (configuredCount > 1000) {
+    if (configuredCount > 1000) {
       this.platform.log.error('max_capsule_count above 1000 is not possible!');
       return 1000;
     }

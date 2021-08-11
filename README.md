@@ -22,7 +22,7 @@ Besides, there are also sensors:
 |Tray Error| Opens whenever a capsule jams the tray or whenever the capsule tray is full. |
 
 ### Capsule Count
-The status of the capsule count is reflected using the battery level inside the Home App. By default the 'max_capsule_count' count is 1000, this is the maximum number your machine can decrement. First make sure to setup the amount of capsules left inside the Nespresso App. *Whenever this plugin runs, you can't connect via the app, because the machine can only connect one device at a time!*
+The status of the capsule count is reflected using the battery level inside the Home App. By default the 'max_capsule_count' count is 0, this is the maximum number your machine can decrement. First make sure to setup the amount of capsules left inside the Nespresso App. *Whenever this plugin runs, you can't connect via the app, because the machine can only connect one device at a time!*
 
 <img src="https://github.com/tritter/homebridge-brewer/blob/master/.img/capsules_left.jpg?raw=true" height=250 >
 
@@ -75,7 +75,7 @@ Update your Homebridge `config.json` file. See [config-sample.json](config-sampl
 | `token`||Authentication token which is required to send any commands see below ho to gather one. Make sure the format is exactly "XX-XX-XX-XX-XX-XX-XX-XX"|
 | `temperature`|"Medium"| Mandatory. The temperature which is used to brew your coffees. Can be set to "Low", "Medium" and "High".
 | `disabled_beverages`|[]| Optional. Disable the exposed switches, can be set to a list of items that shouldn't be exposed to the Home-app: ["ristretto", "espresso", "lungo", "americano", "water"]
-| `max_capsule_count`|1000| Optional. Set your maximum capsule count. The capsule count is displayed as battery percentage: 500 of 1000 (capsule_count) == 50%. Value can be between 1-1000.
+| `max_capsule_count`|0| Optional. Set your maximum capsule count. The capsule count is displayed as battery percentage: 500 of 1000 (capsule_count) == 50%. Value can be between 1-1000, 0 is disabled (default)
 
 ## Name
 You can find the name quite easily add the platform and check the homebridge log. If your homebridge server has bluetooth enabled and is close enough to the machine you will see something like this:
