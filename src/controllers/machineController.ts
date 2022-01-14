@@ -1,6 +1,6 @@
 import { PlatformAccessory, Logger } from 'homebridge';
 import { CoffeeType, CoffeeTypeUtils, TemperatureType, TemperatureUtils } from '../models/cofeeTypes';
-import { on, Peripheral, startScanningAsync, stopScanningAsync, Characteristic, removeAllListeners, state } from 'noble';
+import { on, Peripheral, startScanningAsync, stopScanningAsync, Characteristic, removeAllListeners, state } from '@abandonware/noble';
 import MachineUDID from '../models/machineUDIDs';
 import { MachineStatus } from '../models/machineStatus';
 import { ResponseStatus } from '../models/responseStatus';

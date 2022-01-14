@@ -37,7 +37,7 @@
     "typescript": "^4.2.2"
   },
   "dependencies": {
-    "noble": "https://github.com/abandonware/noble.git"
+    "@abandonware/noble": "1.9.2-13"
   },
   "funding": [
     {

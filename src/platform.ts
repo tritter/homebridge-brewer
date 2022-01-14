@@ -1,5 +1,5 @@
 import { API, DynamicPlatformPlugin, Logger, PlatformAccessory, PlatformConfig, Service, Characteristic } from 'homebridge';
-import { on, Peripheral, startScanningAsync, stopScanning } from 'noble';
+import { on, Peripheral, startScanningAsync, stopScanning } from '@abandonware/noble';
 import { PLATFORM_NAME, PLUGIN_NAME } from './settings';
 import { ExpertPlatformAccessory } from './platformAccessory';
 import MachineUDID from './models/machineUDIDs';
