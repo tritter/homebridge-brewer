@@ -1,7 +1,7 @@
 {
   "displayName": "Brewer",
   "name": "homebridge-brewer",
-  "version": "2.0.5",
+  "version": "2.0.6",
   "description": "Brew your coffee via homebridge! Plugin for Nespresso machines using Bluetooth like the Nespresso Expert line",
   "license": "Apache-2.0",
   "repository": {
