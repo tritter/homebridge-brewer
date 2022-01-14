@@ -1,5 +1,6 @@
 import { Logger, PlatformAccessory, Service } from 'homebridge';
-import { AccessoryUtils, CoffeeType, CoffeeTypeUtils } from '../models/cofeeTypes';
+import { AccessoryUtils } from '../models/accessory';
+import { CoffeeType, CoffeeTypeUtils } from '../models/cofeeTypes';
 import { IDeviceConfig } from '../models/deviceConfig';
 import { NespressoPlatform } from '../platform';
 

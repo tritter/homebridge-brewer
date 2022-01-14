@@ -1,5 +1,5 @@
 import { PlatformAccessory, CharacteristicValue } from 'homebridge';
-import { CoffeeType, CoffeeTypeUtils, TemperatureUtils } from './models/cofeeTypes';
+import { CoffeeType, CoffeeTypeUtils } from './models/cofeeTypes';
 import { NespressoPlatform } from './platform';
 import { IDeviceConfig } from './models/deviceConfig';
 import { SliderStatus } from './models/sliderStatus';
@@ -7,6 +7,7 @@ import { IServiceController, ServiceController } from './controllers/serviceCont
 import { CapsuleCount } from './models/capsuleCount';
 import { MachineStatus } from './models/machineStatus';
 import { MachineController } from './controllers/machineController';
+import { TemperatureUtils } from './models/temperatureType';
 
 export class ExpertPlatformAccessory {
   private static WATCHDOG_INTERVAL_MS = 1000 * 60 * 1; //one minute

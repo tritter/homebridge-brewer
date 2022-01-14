@@ -1,5 +1,5 @@
 import { PlatformAccessory, Logger } from 'homebridge';
-import { CoffeeType, CoffeeTypeUtils, TemperatureType, TemperatureUtils } from '../models/cofeeTypes';
+import { CoffeeType, CoffeeTypeUtils } from '../models/cofeeTypes';
 import { on, Peripheral, startScanningAsync, stopScanningAsync, Characteristic, removeAllListeners, state } from '@abandonware/noble';
 import MachineUDID from '../models/machineUDIDs';
 import { MachineStatus } from '../models/machineStatus';
@@ -9,6 +9,7 @@ import { SliderStatus } from '../models/sliderStatus';
 import { CapsuleCount } from '../models/capsuleCount';
 import EventEmitter from 'events';
 import os from 'os';
+import { TemperatureType, TemperatureUtils } from '../models/temperatureType';
 
 export interface IMachineController {
   isConnected(): boolean;

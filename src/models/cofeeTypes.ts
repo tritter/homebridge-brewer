@@ -1,5 +1,7 @@
 import { PlatformAccessory } from 'homebridge';
+import { AccessoryUtils } from './accessory';
 import { IDeviceConfig } from './deviceConfig';
+import { TemperatureType } from './temperatureType';
 
 export enum CoffeeType {
     Ristretto = 0,
@@ -8,43 +10,6 @@ export enum CoffeeType {
     Water = 4,
     Americano = 5
   }
-
-export enum TemperatureType {
-    Medium = 0,
-    Low = 1,
-    High = 2
-}
-
-export class AccessoryUtils {
-  public static toUDID(accessory: PlatformAccessory, suffix: string) {
-    const uuid = accessory.UUID;
-    return uuid.slice(0, suffix.length) + suffix;
-  }
-}
-
-export class TemperatureUtils {
-  public static ofString(value: string) : TemperatureType {
-    switch(value) {
-      case 'Low':
-        return TemperatureType.Low;
-      case 'High':
-        return TemperatureType.High;
-      default:
-        return TemperatureType.Medium;
-    }
-  }
-
-  public static toString(type: TemperatureType) : string {
-    switch(type) {
-      case TemperatureType.Low:
-        return 'Low';
-      case TemperatureType.High:
-        return 'High';
-      default:
-        return 'Medium';
-    }
-  }
-}
 
 export class CoffeeTypeUtils {
   public static all() : CoffeeType[] {
