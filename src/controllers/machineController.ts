@@ -317,11 +317,6 @@ export class MachineController extends EventEmitter implements IMachineControlle
         this.log.debug(`Received capsule count change! ${data.toString('hex')}`);
         this.emit('capsule', new CapsuleCount(data));
       });
-      capsuleCharacteristic.notify(true, (error) => {
-        if (error) {
-          rejects(`Error enabling notify ${error}`);
-        }
-      });
     });
   }
 
