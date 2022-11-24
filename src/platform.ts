@@ -4,6 +4,7 @@ import { PLATFORM_NAME, PLUGIN_NAME } from './settings';
 import { ExpertPlatformAccessory } from './platformAccessory';
 import MachineUDID from './models/machineUDIDs';
 import { IDeviceConfig } from './models/deviceConfig';
+import { assertBluetooth } from './helpers';
 
 export class NespressoPlatform implements DynamicPlatformPlugin {
 
@@ -44,13 +45,15 @@ export class NespressoPlatform implements DynamicPlatformPlugin {
     const devicesMap = configuredDevices.reduce((a, x) => ({...a, [x.name]: x.token}), {});
     this.log.debug(`Configured machines: ${configuredDevices.length}`);
     this.log.debug('Start discovery');
-    startScanningAsync([MachineUDID.services.auth, MachineUDID.services.command], false);
     on('discover', (peripheral: Peripheral) => {
       if (!devicesMap[peripheral.advertisement.localName]) {
         this.log.info(`Found new device, please add configuration for: "${peripheral.advertisement.localName}"`);
       } else {
         this.log.debug(`Found ${peripheral.advertisement.localName}, already configured`);
       }
+    });
+    assertBluetooth(this.log).then(() => {
+      startScanningAsync([MachineUDID.services.auth, MachineUDID.services.command], false);
     });
 
     for (const configuredDevice of configuredDevices) {

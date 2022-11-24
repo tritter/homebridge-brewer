@@ -10,6 +10,7 @@ import { CapsuleCount } from '../models/capsuleCount';
 import EventEmitter from 'events';
 import os from 'os';
 import { TemperatureType, TemperatureUtils } from '../models/temperatureType';
+import { assertBluetooth } from '../helpers';
 
 export interface IMachineController {
   isConnected(): boolean;
@@ -20,7 +21,6 @@ export interface IMachineController {
   cancel(): Promise<ResponseStatus | undefined>;
   reconnect(): Promise<void>;
   disconnect(): Promise<void>;
-  assertBluetooth(): Promise<void>;
 }
 
 export interface IMachineControllerEvents {
@@ -165,32 +165,10 @@ export class MachineController extends EventEmitter implements IMachineControlle
     this._lastBrew = undefined;
   }
 
-  async assertBluetooth(): Promise<void> {
-    return new Promise((resolve, rejects) => {
-      this.log.debug(`Bluetooth state:${state}`);
-      if (state !== 'unknown') {
-        resolve();
-      } else {
-        let emitter: EventEmitter | undefined = undefined;
-        const changedHandler = (state: string) => {
-          emitter?.removeListener('stateChange', changedHandler);
-          if (state !== 'poweredOn') {
-            this.log.error(`Bluetooth not available! ${state}`);
-            rejects();
-          } else {
-            this.log.debug('Bluetooth is available');
-            resolve();
-          }
-        };
-        emitter = on('stateChange', changedHandler);
-      }
-    });
-  }
-
   private find(): Promise<Peripheral> {
     removeAllListeners('discover');
     return new Promise((resolve, rejects) => {
-      this.assertBluetooth().then(() => {
+      assertBluetooth(this.log).then(() => {
         this.log.debug('Start scan...');
         on('discover', (peripheral: Peripheral) => {
           if (peripheral.advertisement.localName === this._config.name) {
@@ -316,6 +294,11 @@ export class MachineController extends EventEmitter implements IMachineControlle
       capsuleCharacteristic.on('data', (data: Buffer) => {
         this.log.debug(`Received capsule count change! ${data.toString('hex')}`);
         this.emit('capsule', new CapsuleCount(data));
+      });
+      capsuleCharacteristic.notify(true, (error) => {
+        if (error) {
+          rejects(`Error enabling notify ${error}`);
+        }
       });
     });
   }
