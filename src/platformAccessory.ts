@@ -8,6 +8,7 @@ import { CapsuleCount } from './models/capsuleCount';
 import { MachineStatus } from './models/machineStatus';
 import { MachineController } from './controllers/machineController';
 import { TemperatureUtils } from './models/temperatureType';
+import { assertBluetooth } from './helpers';
 
 export class ExpertPlatformAccessory {
   private static WATCHDOG_INTERVAL_MS = 1000 * 60 * 1; //one minute
@@ -28,7 +29,7 @@ export class ExpertPlatformAccessory {
   }
 
   async connect() {
-    await this._controller.assertBluetooth();
+    await assertBluetooth(this.platform.log);
     this._controller.connect();
     this.startConnectionDog();
   }
