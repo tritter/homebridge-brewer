@@ -1,6 +1,5 @@
 import { PlatformAccessory, Logger } from 'homebridge';
 import { CoffeeType, CoffeeTypeUtils } from '../models/cofeeTypes';
-import { on, Peripheral, startScanningAsync, stopScanningAsync, Characteristic, removeAllListeners, state } from '@abandonware/noble';
 import MachineUDID from '../models/machineUDIDs';
 import { MachineStatus } from '../models/machineStatus';
 import { ResponseStatus } from '../models/responseStatus';
@@ -10,7 +9,8 @@ import { CapsuleCount } from '../models/capsuleCount';
 import EventEmitter from 'events';
 import os from 'os';
 import { TemperatureType, TemperatureUtils } from '../models/temperatureType';
-import { assertBluetooth } from '../helpers';
+import noble from '@abandonware/noble';
+
 
 export interface IMachineController {
   isConnected(): boolean;
@@ -21,6 +21,7 @@ export interface IMachineController {
   cancel(): Promise<ResponseStatus | undefined>;
   reconnect(): Promise<void>;
   disconnect(): Promise<void>;
+  startWatching(): void;
 }
 
 export interface IMachineControllerEvents {
@@ -34,25 +35,30 @@ export class MachineController extends EventEmitter implements IMachineControlle
   private static RECONNECT_TIMEOUT_MS = 1000 * 10; //10 second
   private static UNREACHABLE_TIMEOUT = 1000 * 60 * 5; //5 min
   private readonly _config: IDeviceConfig;
-  private _periphial: Peripheral | undefined;
+  private _periphial: noble.Peripheral | undefined;
   private _lastBrew: CoffeeType | undefined;
   private _lastStatus: MachineStatus | undefined;
   private _scanning = false;
   private _lastContact: Date | undefined;
+  private _stateChangeListener: EventEmitter | undefined;
 
   constructor(
     public readonly log: Logger,
     public readonly accessory: PlatformAccessory) {
     super();
     this._config = accessory.context.device;
-    this.subscribeBluetoothState();
   }
 
-  private subscribeBluetoothState() {
-    on('stateChange', () => {
-      if (state !== 'poweredOn') {
-        this.log.error(`Bluetooth unavailable:${state}`);
+  startWatching() {
+    if (this._stateChangeListener) {
+      return;
+    }
+    this._stateChangeListener = noble.on('stateChange', () => {
+      if (noble.state !== 'poweredOn') {
+        this.log.error(`Bluetooth unavailable:${noble.state}`);
         this.disconnect();
+      } else {
+        this.reconnect();
       }
     });
   }
@@ -105,11 +111,15 @@ export class MachineController extends EventEmitter implements IMachineControlle
   }
 
   async reconnect(): Promise<void> {
-    await this.disconnect();
-    await this.connect();
+    if (!this._stateChangeListener) {
+      this.startWatching();
+    } else {
+      await this.disconnect();
+      await this.connect();
+    }
   }
 
-  async connect(): Promise<Characteristic[]> {
+  async connect(): Promise<noble.Characteristic[]> {
     const sessionRunning = this.isConnected();
     if (sessionRunning) {
       return await this.findCharacteristics(this._periphial!);
@@ -117,7 +127,7 @@ export class MachineController extends EventEmitter implements IMachineControlle
     await this.disconnect();
     this._periphial = await this.find();
     const characteristics = await this.findCharacteristics(this._periphial!);
-    this._periphial.on('disconnect', async (error: string) => {
+    this._periphial?.on('disconnect', async (error: string) => {
       this.log.debug('Machine did disconnect!');
       this._lastContact = new Date();
       this._lastBrew = undefined;
@@ -146,7 +156,7 @@ export class MachineController extends EventEmitter implements IMachineControlle
     return (platform === 'linux' || platform === 'freebsd' || platform === 'win32');
   }
 
-  async subscribe(characteristics: Characteristic[]) {
+  async subscribe(characteristics: noble.Characteristic[]) {
     await this.subscribeStatus(characteristics);
     await this.subscribeSliderStatus(characteristics);
     await this.subscribeCapsuleCount(characteristics);
@@ -165,33 +175,31 @@ export class MachineController extends EventEmitter implements IMachineControlle
     this._lastBrew = undefined;
   }
 
-  private find(): Promise<Peripheral> {
-    removeAllListeners('discover');
+  private find(): Promise<noble.Peripheral> {
+    noble.removeAllListeners('discover');
     return new Promise((resolve, rejects) => {
-      assertBluetooth(this.log).then(() => {
-        this.log.debug('Start scan...');
-        on('discover', (peripheral: Peripheral) => {
-          if (peripheral.advertisement.localName === this._config.name) {
-            removeAllListeners('discover');
-            stopScanningAsync();
-            peripheral.connect((error) => {
-              this._scanning = false;
-              if (error) {
-                rejects('Error connecting to periphial');
-              } else {
-                this.log.debug(`Connected to ${peripheral.advertisement.localName}`);
-                resolve(peripheral);
-              }
-            });
-          }
-        });
-        this._scanning = true;
-        startScanningAsync([MachineUDID.services.auth, MachineUDID.services.command], true);
-      }).catch();
+      this.log.debug('Start scan...');
+      noble.on('discover', (peripheral: noble.Peripheral) => {
+        if (peripheral.advertisement.localName === this._config.name) {
+          noble.removeAllListeners('discover');
+          noble.stopScanningAsync();
+          peripheral.connect((error) => {
+            this._scanning = false;
+            if (error) {
+              rejects('Error connecting to periphial');
+            } else {
+              this.log.debug(`Connected to ${peripheral.advertisement.localName}`);
+              resolve(peripheral);
+            }
+          });
+        }
+      });
+      this._scanning = true;
+      noble.startScanningAsync([MachineUDID.services.auth, MachineUDID.services.command], true);
     });
   }
 
-  private findCharacteristics(peripheral: Peripheral) : Promise<Characteristic[]> {
+  private findCharacteristics(peripheral: noble.Peripheral) : Promise<noble.Characteristic[]> {
     return new Promise((resolve) => {
       peripheral.discoverAllServicesAndCharacteristics((error, services, characteristics) => {
         resolve(characteristics);
@@ -199,7 +207,7 @@ export class MachineController extends EventEmitter implements IMachineControlle
     });
   }
 
-  private authenticate(characteristics: Characteristic[]) : Promise<void> {
+  private authenticate(characteristics: noble.Characteristic[]) : Promise<void> {
     return new Promise((resolve, rejects) => {
       this.log.debug('Start Authentication');
       const data = this.generateKey();
@@ -236,7 +244,7 @@ export class MachineController extends EventEmitter implements IMachineControlle
     return Buffer.from(view);
   }
 
-  private subscribeStatus(characteristics: Characteristic[]) : Promise<void> {
+  private subscribeStatus(characteristics: noble.Characteristic[]) : Promise<void> {
     return new Promise((resolve, rejects) => {
       this.log.debug('Start subscribe status');
       const statusCharacteristic = characteristics.find(char => char.uuid === MachineUDID.characteristics.status)!;
@@ -259,7 +267,7 @@ export class MachineController extends EventEmitter implements IMachineControlle
     });
   }
 
-  private subscribeSliderStatus(characteristics: Characteristic[]) : Promise<void> {
+  private subscribeSliderStatus(characteristics: noble.Characteristic[]) : Promise<void> {
     return new Promise((resolve, rejects) => {
       this.log.debug('Start subscribe status');
       const statusCharacteristic = characteristics.find(char => char.uuid === MachineUDID.characteristics.slider)!;
@@ -281,7 +289,7 @@ export class MachineController extends EventEmitter implements IMachineControlle
     });
   }
 
-  private subscribeCapsuleCount(characteristics: Characteristic[]) : Promise<void> {
+  private subscribeCapsuleCount(characteristics: noble.Characteristic[]) : Promise<void> {
     return new Promise((resolve, rejects) => {
       this.log.debug('Start subscribe capsule counter');
       const capsuleCharacteristic = characteristics.find(char => char.uuid === MachineUDID.characteristics.capsules)!;
@@ -295,15 +303,10 @@ export class MachineController extends EventEmitter implements IMachineControlle
         this.log.debug(`Received capsule count change! ${data.toString('hex')}`);
         this.emit('capsule', new CapsuleCount(data));
       });
-      capsuleCharacteristic.notify(true, (error) => {
-        if (error) {
-          rejects(`Error enabling notify ${error}`);
-        }
-      });
     });
   }
 
-  private subscribeResponse(characteristics: Characteristic[]) : Promise<void> {
+  private subscribeResponse(characteristics: noble.Characteristic[]) : Promise<void> {
     return new Promise((resolve, rejects) => {
       this.log.debug('Start subscribe response');
       const responseCharacteristic = characteristics.find(char => char.uuid === MachineUDID.characteristics.response)!;
@@ -321,7 +324,7 @@ export class MachineController extends EventEmitter implements IMachineControlle
     });
   }
 
-  private async updateStates(characteristics: Characteristic[]) {
+  private async updateStates(characteristics: noble.Characteristic[]) {
     this.log.debug('Request reading states');
     const statusCharacteristic = characteristics.find(char => char.uuid === MachineUDID.characteristics.status)!;
     const capsulesCharacteristic = characteristics.find(char => char.uuid === MachineUDID.characteristics.capsules)!;
@@ -331,7 +334,7 @@ export class MachineController extends EventEmitter implements IMachineControlle
     sliderCharacteristic.read();
   }
 
-  private sendBrewCommand(characteristics: Characteristic[],
+  private sendBrewCommand(characteristics: noble.Characteristic[],
     coffeeType: CoffeeType,
     temperature: TemperatureType) : Promise<ResponseStatus> {
     const command = CoffeeTypeUtils.command(coffeeType, temperature);
@@ -339,13 +342,13 @@ export class MachineController extends EventEmitter implements IMachineControlle
     return this.sendCommand(characteristics, this.generateBuffer(command));
   }
 
-  private sendCancelCommand(characteristics: Characteristic[]) : Promise<ResponseStatus> {
+  private sendCancelCommand(characteristics: noble.Characteristic[]) : Promise<ResponseStatus> {
     const command = new Uint8Array([ 0x03, 0x06, 0x01, 0x02]);
     this.log.info('Writing cancel command');
     return this.sendCommand(characteristics, Buffer.from(command));
   }
 
-  private async sendCommand(characteristics: Characteristic[], buffer: Buffer) : Promise<ResponseStatus> {
+  private async sendCommand(characteristics: noble.Characteristic[], buffer: Buffer) : Promise<ResponseStatus> {
     return new Promise((resolve, rejects) => {
       const receiveChar = characteristics.find(char => char.uuid === MachineUDID.characteristics.response)!;
       const sendChar = characteristics.find(char => char.uuid === MachineUDID.characteristics.request)!;
